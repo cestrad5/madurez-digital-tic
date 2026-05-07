@@ -8,7 +8,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <header className="glass" style={{
+    <header className="glass no-print" style={{
       position: 'sticky',
       top: 0,
       zIndex: 100,

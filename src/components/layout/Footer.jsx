@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer style={{
+    <footer className="no-print" style={{
       background: 'var(--color-surface)',
       borderTop: '1px solid var(--color-border)',
       padding: '3rem 0',
