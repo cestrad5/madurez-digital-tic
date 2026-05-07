@@ -45,8 +45,9 @@ const Login = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <button 
             onClick={handleGoogleLogin}
+            className="login-button google"
             style={{
-              padding: '1.25rem',
+              padding: '1rem',
               borderRadius: 'var(--radius)',
               background: '#FFFFFF',
               color: '#1A202C',
@@ -55,26 +56,19 @@ const Login = () => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '1rem',
-              fontWeight: 800,
-              fontSize: '1.1rem',
-              cursor: 'pointer',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              fontWeight: 700,
+              cursor: 'pointer'
             }}
           >
-            <Chrome size={24} color="#4285F4" /> Continuar con Google
+            <Chrome size={20} color="#4285F4" /> Continuar con Google
           </button>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '1rem 0' }}>
-            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }}></div>
-            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A0AEC0' }}>O TAMBIÉN</span>
-            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }}></div>
-          </div>
 
           <button 
+            onClick={handleGoogleLogin}
             style={{
               padding: '1.25rem',
               borderRadius: 'var(--radius)',
-              background: '#2D3748',
+              background: 'var(--color-primary)',
               color: '#FFFFFF',
               border: 'none',
               display: 'flex',
@@ -83,10 +77,36 @@ const Login = () => {
               gap: '1rem',
               fontWeight: 800,
               fontSize: '1.1rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(76, 155, 47, 0.4)'
             }}
           >
-            <Github size={24} /> Continuar con GitHub
+            🚀 ACCESO DEMO (INSTANTÁNEO)
+          </button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.5rem 0' }}>
+            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }}></div>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#A0AEC0' }}>O OTRAS OPCIONES</span>
+            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }}></div>
+          </div>
+
+          <button 
+            style={{
+              padding: '1rem',
+              borderRadius: 'var(--radius)',
+              background: '#2D3748',
+              color: '#FFFFFF',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '1rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              opacity: 0.7
+            }}
+          >
+            <Github size={20} /> Continuar con GitHub
           </button>
         </div>
 
