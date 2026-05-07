@@ -15,19 +15,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
-          cache-dependency-path: app/package.json
+          cache-dependency-path: package.json
 
       - name: Install dependencies
-        run: |
-          cd app
-          npm install
+        run: npm install
 
       - name: Build project
-        run: |
-          cd app
-          npm run build
+        run: npm run build
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -43,6 +39,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          source: "app/dist/*"
+          source: "dist/*"
           target: "/var/www/madurez-digital"
-          strip_components: 2
+          strip_components: 1
