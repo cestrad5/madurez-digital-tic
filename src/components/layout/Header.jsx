@@ -54,6 +54,7 @@ const Header = () => {
         <nav style={{ display: 'none', gap: '2rem' }} className="desktop-nav">
           <Link to="/" style={{ fontWeight: 600 }}>Inicio</Link>
           <Link to="/assessment" style={{ fontWeight: 600 }}>Diagnóstico</Link>
+          <Link to="/dashboard" style={{ fontWeight: 600 }}>Benchmark</Link>
           <Link to="/history" style={{ fontWeight: 600 }}>Historial</Link>
           <Link to="/login" style={{
             background: 'var(--color-primary)',

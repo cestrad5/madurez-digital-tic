@@ -1,30 +1,64 @@
-export const BENCHMARK_DATA = [
-  { sector: 'desarrollo_sw', size: 'micro',    D1: 42, D2: 38, D3: 35, D4: 28, D5: 40, total: 37 },
-  { sector: 'desarrollo_sw', size: 'pequena',  D1: 58, D2: 55, D3: 52, D4: 45, D5: 55, total: 54 },
-  { sector: 'desarrollo_sw', size: 'mediana',  D1: 72, D2: 70, D3: 65, D4: 62, D5: 68, total: 68 },
-  { sector: 'consultoria',   size: 'micro',    D1: 48, D2: 35, D3: 50, D4: 32, D5: 45, total: 42 },
-  { sector: 'consultoria',   size: 'pequena',  D1: 65, D2: 52, D3: 68, D4: 50, D5: 62, total: 60 },
-  { sector: 'outsourcing',   size: 'micro',    D1: 35, D2: 42, D3: 38, D4: 25, D5: 38, total: 36 },
-  { sector: 'outsourcing',   size: 'pequena',  D1: 55, D2: 60, D3: 48, D4: 42, D5: 52, total: 52 },
-  { sector: 'ciberseguridad',size: 'pequena',  D1: 68, D2: 78, D3: 62, D4: 58, D5: 55, total: 65 },
-  { sector: 'ciberseguridad',size: 'mediana',  D1: 78, D2: 85, D3: 72, D4: 68, D5: 65, total: 75 },
-  { sector: 'otro',          size: 'micro',    D1: 30, D2: 30, D3: 30, D4: 25, D5: 35, total: 30 },
+// Categorías estandarizadas para la industria TIC
+export const SECTORS = [
+  { id: 'software', label: 'Desarrollo de Software & Apps', icon: '💻' },
+  { id: 'servicios_ti', label: 'Servicios TI & Consultoría', icon: '🛡️' },
+  { id: 'infraestructura', label: 'Infraestructura & Hardware', icon: '🏗️' },
+  { id: 'edtech', label: 'EdTech & Formación Digital', icon: '🎓' },
+  { id: 'fintech', label: 'Fintech & E-commerce', icon: '💳' },
+  { id: 'telecom', label: 'Telecomunicaciones', icon: '📡' },
 ];
 
-export function getBenchmarkForCompany(sector, size) {
-  const match = BENCHMARK_DATA.find(b => b.sector === sector && b.size === size);
-  if (match) return match;
-  
-  // Si no hay match exacto, buscar por tamaño promedio
-  const sizeMatch = BENCHMARK_DATA.filter(b => b.size === size);
-  if (sizeMatch.length > 0) {
-    const avg = { D1: 0, D2: 0, D3: 0, D4: 0, D5: 0, total: 0 };
-    sizeMatch.forEach(b => {
-      avg.D1 += b.D1; avg.D2 += b.D2; avg.D3 += b.D3; avg.D4 += b.D4; avg.D5 += b.D5; avg.total += b.total;
-    });
-    Object.keys(avg).forEach(key => avg[key] = Math.round(avg[key] / sizeMatch.length));
-    return avg;
-  }
+export const SIZES = [
+  { id: 'micro', label: 'Micro (1-10 emp.)', icon: '🌱' },
+  { id: 'pequena', label: 'Pequeña (11-50 emp.)', icon: '🌿' },
+  { id: 'mediana', label: 'Mediana (51-200 emp.)', icon: '🌳' },
+  { id: 'grande', label: 'Grande (+200 emp.)', icon: '🏙️' },
+];
 
-  return BENCHMARK_DATA[0]; // Fallback
+// Generación de data simulada para el benchmark regional (Antioquia TIC)
+// Esto simula promedios de madurez por cada combinación de sector/tamaño
+const generateBenchmarkData = () => {
+  const data = [];
+  SECTORS.forEach(sector => {
+    SIZES.forEach(size => {
+      // Base de madurez según tamaño (más grandes suelen tener más procesos)
+      let base = size.id === 'micro' ? 30 : size.id === 'pequena' ? 45 : size.id === 'mediana' ? 60 : 75;
+      
+      // Ajuste por sector
+      if (sector.id === 'software') base += 10;
+      if (sector.id === 'telecom') base += 5;
+      
+      data.push({
+        sector: sector.id,
+        size: size.id,
+        D1: Math.min(95, base + Math.floor(Math.random() * 15)),
+        D2: Math.min(95, base + Math.floor(Math.random() * 15)),
+        D3: Math.min(95, base + Math.floor(Math.random() * 15)),
+        D4: Math.min(95, base + Math.floor(Math.random() * 15)),
+        D5: Math.min(95, base + Math.floor(Math.random() * 15)),
+        total: 0 // Se calcula abajo
+      });
+    });
+  });
+
+  return data.map(d => ({
+    ...d,
+    total: Math.round((d.D1 + d.D2 + d.D3 + d.D4 + d.D5) / 5)
+  }));
+};
+
+export const BENCHMARK_DATA = generateBenchmarkData();
+
+export function getBenchmarkForCompany(sectorId, sizeId) {
+  const match = BENCHMARK_DATA.find(b => b.sector === sectorId && b.size === sizeId);
+  return match || BENCHMARK_DATA[0];
+}
+
+// Data para el Dashboard Global (Promedios por sector)
+export function getSectorAverages() {
+  return SECTORS.map(s => {
+    const sectorData = BENCHMARK_DATA.filter(b => b.sector === s.id);
+    const avg = sectorData.reduce((acc, curr) => acc + curr.total, 0) / sectorData.length;
+    return { name: s.label, score: Math.round(avg) };
+  });
 }
