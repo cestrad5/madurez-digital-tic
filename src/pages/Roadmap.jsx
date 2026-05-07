@@ -114,14 +114,21 @@ const Roadmap = () => {
         <p style={{ maxWidth: '700px', margin: '1rem auto 2.5rem auto', opacity: 0.7 }}>
           Como socio estratégico de SOFTLINE S.A., puede acceder a mentorías personalizadas para acelerar cada uno de estos hitos tecnológicos.
         </p>
-        <button style={{
-          background: 'var(--color-text)',
-          color: 'white',
-          padding: '1rem 2.5rem',
-          borderRadius: 'var(--radius)',
-          fontWeight: 700,
-          fontSize: '1.1rem'
-        }}>Solicitar Mentoría con Expertos</button>
+        <div
+          role="button"
+          tabIndex={0}
+          style={{
+            display: 'inline-block',
+            background: '#1A2E1A',
+            color: 'white',
+            padding: '1rem 2.5rem',
+            borderRadius: 'var(--radius)',
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+        >Solicitar Mentoría con Expertos</div>
       </div>
     </div>
   );

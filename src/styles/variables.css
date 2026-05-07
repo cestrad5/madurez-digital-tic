@@ -31,13 +31,5 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0F170F;
-    --color-surface: #1A2E1A;
-    --color-text: #F9FAF9;
-    --color-text-muted: #9CA3AF;
-    --color-border: #2D3748;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  }
-}
+/* Dark mode desactivado - Tema siempre claro para consistencia de marca */
+/* @media (prefers-color-scheme: dark) { ... } */

@@ -2,22 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QUESTIONS, DIMENSIONS } from '../lib/questions';
 import { calculateScoring } from '../lib/scoring';
-import { ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react';
 
 const Assessment = () => {
-  const [currentStep, setCurrentStep] = useState(0); // 0-4 (dimensiones)
+  const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const currentDimension = DIMENSIONS[currentStep];
   const dimensionQuestions = QUESTIONS.filter(q => q.dimension === currentDimension.id);
+  const isStepComplete = dimensionQuestions.every(q => answers[q.id] !== undefined);
 
   const handleAnswer = (questionId, value) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
-
-  const isStepComplete = dimensionQuestions.every(q => answers[q.id]);
 
   const nextStep = () => {
     if (currentStep < DIMENSIONS.length - 1) {
@@ -35,160 +33,181 @@ const Assessment = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     setIsSubmitting(true);
-    // Simular guardado en Firestore
     const results = calculateScoring(answers);
     const assessmentId = Date.now().toString();
     localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify({
-      id: assessmentId,
-      answers,
-      results,
+      id: assessmentId, answers, results,
       createdAt: new Date().toISOString()
     }));
-    
-    // Simular delay
-    setTimeout(() => {
-      navigate(`/results/${assessmentId}`);
-    }, 1500);
+    setTimeout(() => navigate(`/results/${assessmentId}`), 1500);
   };
 
   if (isSubmitting) {
     return (
-      <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div className="spinner" style={{
-          width: '50px',
-          height: '50px',
-          border: '5px solid rgba(76, 155, 47, 0.1)',
-          borderTop: '5px solid var(--color-primary)',
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1.5rem' }}>
+        <div style={{
+          width: '56px', height: '56px',
+          border: '5px solid #e5e7eb',
+          borderTop: '5px solid #4C9B2F',
           borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          marginBottom: '2rem'
+          animation: 'spin 1s linear infinite'
         }}></div>
-        <h2>Calculando sus resultados...</h2>
-        <p style={{ opacity: 0.7 }}>Estamos analizando su madurez digital vs. el benchmark regional.</p>
+        <h2 style={{ color: '#1A2E1A' }}>Calculando sus resultados...</h2>
+        <p style={{ color: '#6B7280' }}>Analizando su madurez digital vs. el benchmark regional.</p>
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
+  const progressPct = Math.round((currentStep / DIMENSIONS.length) * 100);
+
   return (
-    <div className="container" style={{ padding: '4rem 0' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-        {/* Progress Header */}
-        <div style={{ marginBottom: '3rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.9rem' }}>
-            <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>
-              Dimensión {currentStep + 1} de {DIMENSIONS.length}
-            </span>
-            <span style={{ opacity: 0.6 }}>
-              {Math.round(((currentStep) / DIMENSIONS.length) * 100)}% Completado
-            </span>
-          </div>
-          <div style={{ background: 'var(--color-border)', height: '6px', borderRadius: '3px', display: 'flex', gap: '4px' }}>
-            {DIMENSIONS.map((_, i) => (
-              <div key={i} style={{ 
-                flex: 1, 
-                height: '100%', 
-                background: i <= currentStep ? 'var(--color-primary)' : 'transparent',
-                borderRadius: '3px',
-                transition: 'var(--transition)'
-              }}></div>
-            ))}
-          </div>
-        </div>
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '3rem 1.5rem' }}>
 
-        {/* Dimension Info */}
-        <div className="glass" style={{ padding: '2rem', borderRadius: 'var(--radius)', marginBottom: '2.5rem', borderLeft: `6px solid ${currentDimension.color}` }}>
-          <h2 style={{ marginBottom: '0.5rem' }}>{currentDimension.name}</h2>
-          <p style={{ opacity: 0.7, fontSize: '0.95rem' }}>Responda con honestidad para obtener un diagnóstico preciso del estado de su empresa en esta área.</p>
+      {/* Progress */}
+      <div style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+          <span style={{ fontWeight: 700, color: '#4C9B2F' }}>
+            Dimensión {currentStep + 1} de {DIMENSIONS.length}
+          </span>
+          <span style={{ color: '#6B7280' }}>{progressPct}% Completado</span>
         </div>
+        <div style={{ background: '#E5E7EB', height: '8px', borderRadius: '4px', display: 'flex', gap: '3px' }}>
+          {DIMENSIONS.map((_, i) => (
+            <div key={i} style={{
+              flex: 1, height: '100%',
+              background: i <= currentStep ? '#4C9B2F' : 'transparent',
+              borderRadius: '4px',
+              transition: 'background 0.3s ease'
+            }}></div>
+          ))}
+        </div>
+      </div>
 
-        {/* Questions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          {dimensionQuestions.map((q, idx) => (
-            <div key={q.id} className="glass" style={{ padding: '2rem', borderRadius: 'var(--radius)' }}>
-              <p style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '1.5rem' }}>
-                <span style={{ opacity: 0.4, marginRight: '0.5rem' }}>{idx + 1}.</span> {q.text}
-              </p>
-              <div style={{ 
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: '1rem' 
-              }}>
-                {(q.options || []).map(opt => (
-                  <button
+      {/* Dimension Header */}
+      <div style={{
+        background: 'white', padding: '1.75rem 2rem',
+        borderRadius: '12px', marginBottom: '2rem',
+        borderLeft: `5px solid ${currentDimension.color}`,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
+      }}>
+        <h2 style={{ margin: '0 0 0.5rem', color: '#1A2E1A', fontSize: '1.4rem' }}>{currentDimension.name}</h2>
+        <p style={{ margin: 0, color: '#6B7280', fontSize: '0.9rem' }}>
+          Responda con honestidad para obtener un diagnóstico preciso de su empresa en esta área.
+        </p>
+      </div>
+
+      {/* Questions */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        {dimensionQuestions.map((q, idx) => (
+          <div key={q.id} style={{
+            background: 'white', padding: '1.75rem',
+            borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
+          }}>
+            <p style={{ fontWeight: 600, fontSize: '1rem', color: '#1A2E1A', marginBottom: '1.25rem', lineHeight: '1.5' }}>
+              <span style={{ color: '#9CA3AF', marginRight: '0.5rem' }}>{idx + 1}.</span>
+              {q.text}
+            </p>
+
+            {/* Answer Options */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+              {(q.options || []).map(opt => {
+                const isSelected = answers[q.id] === opt.value;
+                return (
+                  <div
                     key={opt.value}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleAnswer(q.id, opt.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAnswer(q.id, opt.value)}
                     style={{
-                      flex: '1 1 150px',
-                      padding: '1.25rem 1rem',
-                      borderRadius: 'var(--radius)',
-                      fontSize: '0.9rem',
-                      fontWeight: 700,
+                      flex: '1 1 130px',
+                      padding: '1rem 0.75rem',
+                      borderRadius: '10px',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
                       textAlign: 'center',
-                      background: answers[q.id] === opt.value ? 'var(--color-primary)' : 'white',
-                      color: answers[q.id] === opt.value ? 'white' : 'var(--color-text)',
-                      border: answers[q.id] === opt.value ? '1px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      cursor: 'pointer',
+                      background: isSelected ? '#4C9B2F' : '#F9FAFB',
+                      color: isSelected ? '#FFFFFF' : '#374151',
+                      border: isSelected ? '2px solid #4C9B2F' : '2px solid #E5E7EB',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.5rem',
-                      cursor: 'pointer',
-                      transition: 'var(--transition)'
+                      gap: '0.4rem',
+                      transition: 'all 0.2s ease',
+                      userSelect: 'none',
                     }}
                   >
-                    <span style={{ fontSize: '1.5rem' }}>{opt.value}</span>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
-                {!q.options && <p style={{ color: 'red' }}>Error: No hay opciones para esta pregunta.</p>}
-              </div>
+                    <span style={{ fontSize: '1.4rem' }}>{opt.value}</span>
+                    <span style={{ lineHeight: '1.3' }}>{opt.label}</span>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem', gap: '1rem' }}>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={prevStep}
+          onKeyDown={(e) => e.key === 'Enter' && prevStep()}
+          style={{
+            padding: '0.9rem 1.75rem',
+            borderRadius: '10px',
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+            opacity: currentStep === 0 ? 0.35 : 1,
+            background: 'white',
+            color: '#374151',
+            border: '2px solid #E5E7EB',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            userSelect: 'none',
+          }}
+        >
+          ← Anterior
         </div>
 
-        {/* Navigation Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4rem' }}>
-          <button
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            style={{
-              padding: '1rem 2rem',
-              borderRadius: 'var(--radius)',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              opacity: currentStep === 0 ? 0.3 : 1,
-              background: 'transparent',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)'
-            }}
-          >
-            <ChevronLeft size={20} /> Anterior
-          </button>
-          
-          <button
-            onClick={nextStep}
-            disabled={!isStepComplete}
-            style={{
-              padding: '1rem 3rem',
-              borderRadius: 'var(--radius)',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: isStepComplete ? 'var(--color-primary)' : 'var(--color-border)',
-              color: 'white',
-              cursor: isStepComplete ? 'pointer' : 'not-allowed'
-            }}
-          >
-            {currentStep === DIMENSIONS.length - 1 ? 'Finalizar y Ver Resultados' : 'Siguiente'} <ChevronRight size={20} />
-          </button>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={isStepComplete ? nextStep : undefined}
+          onKeyDown={(e) => e.key === 'Enter' && isStepComplete && nextStep()}
+          style={{
+            padding: '0.9rem 2.25rem',
+            borderRadius: '10px',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            cursor: isStepComplete ? 'pointer' : 'not-allowed',
+            background: isStepComplete ? '#4C9B2F' : '#D1D5DB',
+            color: 'white',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: isStepComplete ? '0 4px 14px rgba(76,155,47,0.3)' : 'none',
+            userSelect: 'none',
+          }}
+        >
+          {currentStep === DIMENSIONS.length - 1 ? '✅ Finalizar y Ver Resultados' : 'Siguiente →'}
         </div>
       </div>
+
+      {/* Helper text */}
+      {!isStepComplete && (
+        <p style={{ textAlign: 'center', color: '#9CA3AF', fontSize: '0.82rem', marginTop: '1rem' }}>
+          Responde todas las preguntas de esta dimensión para continuar.
+        </p>
+      )}
     </div>
   );
 };

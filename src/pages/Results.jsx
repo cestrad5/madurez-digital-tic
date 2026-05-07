@@ -44,12 +44,14 @@ const Results = () => {
           <h1 style={{ fontSize: '2.5rem' }}>Resultados del Diagnóstico</h1>
           <p style={{ opacity: 0.6 }}>Generado el {new Date(data.createdAt).toLocaleDateString()}</p>
         </div>
-        <button 
-          className="glass" 
-          style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}
+        <div
+          role="button"
+          tabIndex={0}
+          className="glass"
+          style={{ padding: '0.75rem 1.5rem', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, cursor: 'pointer', background: 'white', color: '#374151', border: '1px solid #E5E7EB' }}
         >
-          <FileDown size={20} /> Exportar Reporte PDF
-        </button>
+          📄 Exportar Reporte PDF
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '4rem' }}>
@@ -130,8 +132,11 @@ const Results = () => {
           <h2 style={{ color: 'white', marginBottom: '1rem' }}>Su Hoja de Ruta de 90 Días está Lista</h2>
           <p style={{ opacity: 0.9 }}>Hemos diseñado un plan de acción personalizado basado en sus áreas con mayor potencial de mejora.</p>
         </div>
-        <button 
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => navigate(`/roadmap/${id}`)}
+          onKeyDown={(e) => e.key === 'Enter' && navigate(`/roadmap/${id}`)}
           style={{ 
             background: 'white', 
             color: 'var(--color-primary)', 
@@ -140,11 +145,13 @@ const Results = () => {
             fontWeight: 800, 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '0.5rem' 
+            gap: '0.5rem',
+            cursor: 'pointer',
+            userSelect: 'none'
           }}
         >
-          Ver Plan de Acción <ArrowRight size={20} />
-        </button>
+          Ver Plan de Acción →
+        </div>
       </div>
     </div>
   );
