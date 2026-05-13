@@ -15,28 +15,28 @@ export const SIZES = [
   { id: 'grande', label: 'Grande (+200 emp.)', icon: '🏙️' },
 ];
 
-// Generación de data simulada para el benchmark regional (Antioquia TIC)
-// Esto simula promedios de madurez por cada combinación de sector/tamaño
+// Offsets fijos por dimensión para que el benchmark sea reproducible.
+// Representan variación realista entre áreas sin usar Math.random().
+const DIM_OFFSETS = { D1: 8, D2: 12, D3: 5, D4: 13, D5: 7 };
+
+// Data simulada de benchmark regional (Antioquia TIC) — determinista
 const generateBenchmarkData = () => {
   const data = [];
   SECTORS.forEach(sector => {
     SIZES.forEach(size => {
-      // Base de madurez según tamaño (más grandes suelen tener más procesos)
       let base = size.id === 'micro' ? 30 : size.id === 'pequena' ? 45 : size.id === 'mediana' ? 60 : 75;
-      
-      // Ajuste por sector
+
       if (sector.id === 'software') base += 10;
       if (sector.id === 'telecom') base += 5;
-      
+
       data.push({
         sector: sector.id,
         size: size.id,
-        D1: Math.min(95, base + Math.floor(Math.random() * 15)),
-        D2: Math.min(95, base + Math.floor(Math.random() * 15)),
-        D3: Math.min(95, base + Math.floor(Math.random() * 15)),
-        D4: Math.min(95, base + Math.floor(Math.random() * 15)),
-        D5: Math.min(95, base + Math.floor(Math.random() * 15)),
-        total: 0 // Se calcula abajo
+        D1: Math.min(95, base + DIM_OFFSETS.D1),
+        D2: Math.min(95, base + DIM_OFFSETS.D2),
+        D3: Math.min(95, base + DIM_OFFSETS.D3),
+        D4: Math.min(95, base + DIM_OFFSETS.D4),
+        D5: Math.min(95, base + DIM_OFFSETS.D5),
       });
     });
   });

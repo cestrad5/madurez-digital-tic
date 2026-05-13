@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QUESTIONS, DIMENSIONS } from '../lib/questions';
 import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
-import { ChevronRight, ChevronLeft, Building2, Users, Rocket, Info } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Building2, Users } from 'lucide-react';
+
+const SCALE_COLORS = ['#E53E3E', '#DD6B20', '#D69E2E', '#76B852', '#4C9B2F'];
 
 const Assessment = () => {
   const [step, setStep] = useState('profile'); // 'profile' or 'questions'
@@ -12,6 +14,11 @@ const Assessment = () => {
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const submitTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearTimeout(submitTimerRef.current);
+  }, []);
 
   const handleAnswer = (questionId, value) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -41,16 +48,25 @@ const Assessment = () => {
     setIsSubmitting(true);
     const results = calculateScoring(answers);
     const assessmentId = Date.now().toString();
-    
-    localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify({
-      id: assessmentId,
-      companyInfo,
-      answers,
-      results,
-      createdAt: new Date().toISOString()
-    }));
-    
-    setTimeout(() => navigate(`/results/${assessmentId}`), 2000);
+
+    try {
+      localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify({
+        id: assessmentId,
+        companyInfo,
+        answers,
+        results,
+        createdAt: new Date().toISOString()
+      }));
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        setIsSubmitting(false);
+        alert('No hay espacio suficiente en el navegador para guardar este diagnóstico. Elimine diagnósticos anteriores desde el Historial e intente de nuevo.');
+        return;
+      }
+      throw e;
+    }
+
+    submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 2000);
   };
 
   // --- RENDER: PASO DE PERFIL DE EMPRESA ---
@@ -131,9 +147,10 @@ const Assessment = () => {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '4rem' }}>
-          <div 
-            role="button"
+          <button
+            type="button"
             onClick={startAssessment}
+            disabled={!companyInfo.sector || !companyInfo.size}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -146,11 +163,12 @@ const Assessment = () => {
               fontSize: '1.2rem',
               cursor: (companyInfo.sector && companyInfo.size) ? 'pointer' : 'not-allowed',
               transition: 'all 0.3s ease',
-              boxShadow: (companyInfo.sector && companyInfo.size) ? '0 10px 25px rgba(0,0,0,0.15)' : 'none'
+              boxShadow: (companyInfo.sector && companyInfo.size) ? '0 10px 25px rgba(0,0,0,0.15)' : 'none',
+              border: 'none'
             }}
           >
             Comenzar Diagnóstico <ChevronRight />
-          </div>
+          </button>
         </div>
       </div>
     );
@@ -171,7 +189,6 @@ const Assessment = () => {
   }
 
   // --- RENDER: FORMULARIO DE DIAGNÓSTICO (REDiseño UX) ---
-  const colors = ['#E53E3E', '#DD6B20', '#D69E2E', '#76B852', '#4C9B2F'];
 
   return (
     <div className="container" style={{ padding: '4rem 1.5rem', maxWidth: '850px' }}>
@@ -222,9 +239,9 @@ const Assessment = () => {
                       textAlign: 'center',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      background: isSelected ? colors[i] : 'transparent',
+                      background: isSelected ? SCALE_COLORS[i] : 'transparent',
                       color: isSelected ? 'white' : '#4B5563',
-                      boxShadow: isSelected ? `0 8px 20px ${colors[i]}44` : 'none',
+                      boxShadow: isSelected ? `0 8px 20px ${SCALE_COLORS[i]}44` : 'none',
                       transform: isSelected ? 'scale(1.02)' : 'scale(1)',
                       zIndex: isSelected ? 2 : 1
                     }}
@@ -246,31 +263,34 @@ const Assessment = () => {
 
       {/* Navigation */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5rem', gap: '1.5rem' }}>
-        <div 
-          role="button"
-          onClick={() => currentDimensionIdx > 0 && setCurrentDimensionIdx(prev => prev - 1)}
-          style={{ 
+        <button
+          type="button"
+          onClick={() => setCurrentDimensionIdx(prev => prev - 1)}
+          disabled={currentDimensionIdx === 0}
+          style={{
             padding: '1rem 2rem', borderRadius: '14px', fontWeight: 700, cursor: 'pointer',
             background: 'white', color: '#374151', border: '2px solid #E5E7EB',
             display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: currentDimensionIdx === 0 ? 0.3 : 1
           }}
         >
           <ChevronLeft /> Anterior
-        </div>
+        </button>
 
-        <div 
-          role="button"
-          onClick={isDimensionComplete ? nextStep : undefined}
-          style={{ 
+        <button
+          type="button"
+          onClick={nextStep}
+          disabled={!isDimensionComplete}
+          style={{
             padding: '1rem 3.5rem', borderRadius: '14px', fontWeight: 800,
             cursor: isDimensionComplete ? 'pointer' : 'not-allowed',
             background: isDimensionComplete ? '#1A2E1A' : '#D1D5DB',
             color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem',
-            boxShadow: isDimensionComplete ? '0 8px 20px rgba(0,0,0,0.1)' : 'none'
+            boxShadow: isDimensionComplete ? '0 8px 20px rgba(0,0,0,0.1)' : 'none',
+            border: 'none'
           }}
         >
           {currentDimensionIdx === DIMENSIONS.length - 1 ? 'Finalizar Diagnóstico' : 'Siguiente Dimensión'} <ChevronRight />
-        </div>
+        </button>
       </div>
     </div>
   );

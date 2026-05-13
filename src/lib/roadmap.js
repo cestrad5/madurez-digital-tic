@@ -32,7 +32,11 @@ export const ROADMAP_CONTENT = {
       month2: ["Adoptar herramientas de colaboración (Teams, Slack, ClickUp).", "Documentar políticas de seguridad de la información."],
       month3: ["Evaluar la arquitectura de software actual."]
     },
-    // ... más niveles
+    3: {
+      month1: ["Migrar hacia arquitectura de APIs o microservicios.", "Implementar un pipeline CI/CD básico (GitHub Actions, GitLab CI)."],
+      month2: ["Adoptar contenedores (Docker) para despliegues reproducibles.", "Establecer monitoreo de infraestructura en tiempo real (Grafana, Datadog)."],
+      month3: ["Realizar una auditoría de seguridad externa.", "Implementar políticas de acceso basadas en Zero Trust."]
+    }
   },
   D3: {
     1: {
@@ -40,13 +44,32 @@ export const ROADMAP_CONTENT = {
       month2: ["Realizar un diagnóstico de habilidades digitales del personal.", "Lanzar talleres básicos de herramientas de oficina digital."],
       month3: ["Comunicar los beneficios de la transformación digital."]
     },
-    // ... más niveles
+    2: {
+      month1: ["Crear un plan de capacitación digital diferenciado por roles.", "Adoptar una plataforma LMS para formación interna (Moodle, TalentLMS)."],
+      month2: ["Formalizar la función de gestión del talento digital.", "Establecer metas de upskilling medibles por área."],
+      month3: ["Diseñar rutas de aprendizaje para perfiles técnicos clave."]
+    },
+    3: {
+      month1: ["Implementar una estrategia de atracción de talento digital.", "Crear un programa de mentoría interna entre perfiles senior y junior."],
+      month2: ["Medir el índice de adopción digital por área.", "Vincular competencias digitales a las evaluaciones de desempeño."],
+      month3: ["Desarrollar un programa de certificaciones técnicas para el equipo."]
+    }
   },
   D4: {
     1: {
       month1: ["Identificar las fuentes de datos principales del negocio.", "Centralizar datos en hojas de cálculo compartidas."],
       month2: ["Definir los 5 indicadores (KPIs) más importantes.", "Empezar a medir manualmente el desempeño diario."],
       month3: ["Crear un tablero de control (Dashboard) simple en Excel/Sheets."]
+    },
+    2: {
+      month1: ["Implementar un CRM o ERP básico para centralizar datos operativos.", "Estructurar los datos en una base de datos relacional."],
+      month2: ["Establecer procesos de limpieza y validación de calidad de datos.", "Automatizar la recopilación de datos operativos clave."],
+      month3: ["Generar reportes automáticos semanales para la dirección."]
+    },
+    3: {
+      month1: ["Implementar una plataforma de Business Intelligence (Power BI, Looker Studio).", "Definir una arquitectura de datos empresarial documentada."],
+      month2: ["Capacitar al equipo en análisis de datos básico.", "Integrar fuentes de datos externas al dashboard central."],
+      month3: ["Desarrollar modelos predictivos simples para ventas o demanda."]
     }
   },
   D5: {
@@ -54,6 +77,16 @@ export const ROADMAP_CONTENT = {
       month1: ["Asegurar que el sitio web sea responsive (móvil).", "Habilitar un canal de WhatsApp Business."],
       month2: ["Crear una base de datos básica de clientes.", "Solicitar feedback manual a los clientes actuales."],
       month3: ["Estandarizar la comunicación en redes sociales."]
+    },
+    2: {
+      month1: ["Implementar un sistema de tickets o soporte en línea (Freshdesk, Zendesk).", "Mapear el customer journey digital completo."],
+      month2: ["Activar campañas de email marketing automatizadas.", "Integrar un sistema de valoraciones y reseñas."],
+      month3: ["Definir métricas de experiencia del cliente (NPS, CSAT, CES)."]
+    },
+    3: {
+      month1: ["Personalizar la experiencia digital mediante segmentación de clientes.", "Implementar un chatbot de atención básica en web y WhatsApp."],
+      month2: ["Crear un programa de fidelización digital.", "Integrar omnicanalidad (web, app móvil, WhatsApp, redes sociales)."],
+      month3: ["Analizar el comportamiento del cliente con analítica web (GA4, Hotjar)."]
     }
   }
 };

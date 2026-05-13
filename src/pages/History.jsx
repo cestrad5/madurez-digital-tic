@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { History as HistoryIcon, ArrowUpRight, Calendar, BarChart2 } from 'lucide-react';
 
@@ -10,8 +10,12 @@ const History = () => {
     const list = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key.startsWith('assessment_')) {
-        list.push(JSON.parse(localStorage.getItem(key)));
+      if (key?.startsWith('assessment_')) {
+        try {
+          list.push(JSON.parse(localStorage.getItem(key)));
+        } catch {
+          localStorage.removeItem(key);
+        }
       }
     }
     setAssessments(list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));

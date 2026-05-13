@@ -1,7 +1,6 @@
-import React from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Rocket, User } from 'lucide-react';
-import { useState } from 'react';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);

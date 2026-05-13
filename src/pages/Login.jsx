@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const btnBase = {
@@ -72,11 +71,9 @@ const Login = () => {
         </p>
 
         {/* === DEMO BUTTON === */}
-        <div
+        <button
+          type="button"
           onClick={handleDemo}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && handleDemo()}
           style={{
             ...btnBase,
             background: '#4C9B2F',
@@ -87,7 +84,7 @@ const Login = () => {
           }}
         >
           🎯 Acceso Demo — Explorar sin cuenta
-        </div>
+        </button>
 
         {/* Divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '16px 0' }}>
@@ -99,11 +96,9 @@ const Login = () => {
         </div>
 
         {/* === GOOGLE BUTTON === */}
-        <div
+        <button
+          type="button"
           onClick={handleDemo}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && handleDemo()}
           style={{
             ...btnBase,
             background: '#FFFFFF',
@@ -123,7 +118,7 @@ const Login = () => {
             <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
           </svg>
           Continuar con Google
-        </div>
+        </button>
 
         <p style={{ marginTop: '1.25rem', fontSize: '0.75rem', color: '#A0AEC0' }}>
           Al continuar acepta nuestros términos conforme a la Ley 1581 de 2012.

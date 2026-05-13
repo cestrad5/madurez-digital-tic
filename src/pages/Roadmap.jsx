@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { generateRoadmap } from '../lib/roadmap';
 import { Calendar, CheckCircle2, Clock, Zap, ArrowLeft } from 'lucide-react';
@@ -10,10 +10,15 @@ const Roadmap = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem(`assessment_${id}`);
-    if (saved) {
+    if (!saved) {
+      navigate('/');
+      return;
+    }
+    try {
       const parsed = JSON.parse(saved);
       setRoadmap(generateRoadmap(parsed.results));
-    } else {
+    } catch {
+      localStorage.removeItem(`assessment_${id}`);
       navigate('/');
     }
   }, [id, navigate]);
@@ -29,22 +34,26 @@ const Roadmap = () => {
   return (
     <div className="container" style={{ padding: '4rem 0' }}>
       {/* Botón Volver */}
-      <div 
-        role="button"
+      <button
+        type="button"
         onClick={() => navigate(`/results/${id}`)}
         className="no-print"
-        style={{ 
-          display: 'inline-flex', 
-          alignItems: 'center', 
-          gap: '0.5rem', 
-          color: '#6B7280', 
-          fontWeight: 700, 
-          marginBottom: '2rem', 
-          cursor: 'pointer' 
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          color: '#6B7280',
+          fontWeight: 700,
+          marginBottom: '2rem',
+          cursor: 'pointer',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          font: 'inherit'
         }}
       >
         <ArrowLeft size={18} /> Volver a resultados
-      </div>
+      </button>
 
       <div style={{ marginBottom: '5rem', textAlign: 'center' }}>
         <span style={{ 
@@ -212,8 +221,8 @@ const Roadmap = () => {
         <p style={{ maxWidth: '750px', margin: '0 auto 3rem auto', color: '#4B5563', fontSize: '1.1rem', lineHeight: '1.7' }}>
           Como socio estratégico de **SOFTLINE S.A.**, puede acceder a nuestra red de consultores expertos para acelerar la implementación de cada hito técnico de este roadmap.
         </p>
-        <div 
-          role="button"
+        <button
+          type="button"
           style={{
             display: 'inline-block',
             background: '#1A2E1A',
@@ -224,11 +233,12 @@ const Roadmap = () => {
             fontSize: '1.2rem',
             cursor: 'pointer',
             transition: 'all 0.2s ease',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            border: 'none'
           }}
         >
           Agendar Mentoría Técnica
-        </div>
+        </button>
       </div>
     </div>
   );

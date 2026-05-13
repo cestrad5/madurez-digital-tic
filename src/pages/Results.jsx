@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Legend } from 'recharts';
 import { getBenchmarkForCompany } from '../lib/benchmark';
@@ -11,17 +11,22 @@ const Results = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem(`assessment_${id}`);
-    if (saved) {
+    if (!saved) {
+      navigate('/');
+      return;
+    }
+    try {
       setData(JSON.parse(saved));
-    } else {
+    } catch {
+      localStorage.removeItem(`assessment_${id}`);
       navigate('/');
     }
   }, [id, navigate]);
 
   if (!data) return null;
 
-  const { results } = data;
-  const benchmark = getBenchmarkForCompany('desarrollo_sw', 'pequena');
+  const { results, companyInfo } = data;
+  const benchmark = getBenchmarkForCompany(companyInfo?.sector, companyInfo?.size);
 
   const chartData = [
     { subject: 'Estrategia', A: results.D1, B: benchmark.D1 },
@@ -48,26 +53,26 @@ const Results = () => {
           <h1 style={{ fontSize: '2.5rem', color: '#1A2E1A', marginBottom: '0.5rem' }}>Diagnóstico de Madurez Digital</h1>
           <p style={{ color: '#6B7280', fontWeight: 600 }}>Identificador: <span style={{ color: '#4C9B2F' }}>#{id}</span> • Generado el {new Date(data.createdAt).toLocaleDateString()}</p>
         </div>
-        <div 
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={() => window.print()}
           className="no-print"
-          style={{ 
-            padding: '0.8rem 1.8rem', 
-            borderRadius: '12px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '0.6rem', 
+          style={{
+            padding: '0.8rem 1.8rem',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
             fontWeight: 700,
             background: '#1A2E1A',
             color: 'white',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            border: 'none'
           }}
         >
           <FileDown size={20} /> Guardar Reporte PDF
-        </div>
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', marginBottom: '4rem' }}>
@@ -186,28 +191,27 @@ const Results = () => {
           <h2 style={{ color: 'white', fontSize: '2rem', marginBottom: '1rem' }}>Su Hoja de Ruta de 90 Días está Lista</h2>
           <p style={{ opacity: 0.85, fontSize: '1.1rem', lineHeight: '1.6' }}>Hemos diseñado un plan de acción técnica y estratégica personalizado para elevar sus indicadores de madurez digital en el corto plazo.</p>
         </div>
-        <div 
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={() => navigate(`/roadmap/${id}`)}
-          onKeyDown={(e) => e.key === 'Enter' && navigate(`/roadmap/${id}`)}
-          style={{ 
-            background: '#4C9B2F', 
-            color: 'white', 
-            padding: '1.2rem 2.5rem', 
-            borderRadius: '12px', 
-            fontWeight: 800, 
+          style={{
+            background: '#4C9B2F',
+            color: 'white',
+            padding: '1.2rem 2.5rem',
+            borderRadius: '12px',
+            fontWeight: 800,
             fontSize: '1.1rem',
-            display: 'flex', 
-            alignItems: 'center', 
+            display: 'flex',
+            alignItems: 'center',
             gap: '0.7rem',
             cursor: 'pointer',
             transition: 'transform 0.2s ease',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.2)'
+            boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+            border: 'none'
           }}
         >
           Explorar Plan de Acción <ArrowRight size={22} />
-        </div>
+        </button>
       </div>
     </div>
   );
