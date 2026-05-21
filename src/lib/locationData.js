@@ -1,7 +1,7 @@
 export const REGIONS = [
-  { id: 'norte_centro_america', label: '🌎 Norteamérica y Centroamérica' },
-  { id: 'caribe', label: '🌴 Caribe' },
-  { id: 'sudamerica', label: '🗺️ Sudamérica' },
+  { id: 'norte_centro_america', label: 'Norteamérica y Centroamérica', icon: '🌎' },
+  { id: 'caribe', label: 'Caribe', icon: '🌴' },
+  { id: 'sudamerica', label: 'Sudamérica', icon: '🗺️' },
 ];
 
 export const COUNTRIES = {
