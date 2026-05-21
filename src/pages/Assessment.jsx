@@ -170,10 +170,14 @@ const Assessment = () => {
       dimensiones:  { D1: results.D1, D2: results.D2, D3: results.D3, D4: results.D4, D5: results.D5 },
       fecha:        new Date().toISOString()
     });
-    try {
-      const sent = navigator.sendBeacon('https://mairidhmon.app.n8n.cloud/webhook/diagnostico', new Blob([n8nPayload], { type: 'application/json' }));
-      console.log('[n8n] sendBeacon enviado:', sent, JSON.parse(n8nPayload));
-    } catch (e) { console.error('[n8n] sendBeacon falló:', e); }
+    fetch('https://mairidhmon.app.n8n.cloud/webhook/diagnostico', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: n8nPayload,
+      keepalive: true
+    })
+      .then(r => console.log('[n8n] fetch status:', r.status, r.ok))
+      .catch(e => console.error('[n8n] fetch error:', e.message));
 
     sessionStorage.removeItem(DRAFT_KEY);
     submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 1800);
