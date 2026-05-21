@@ -133,7 +133,9 @@ const Assessment = () => {
     setIsSubmitting(true);
     const results = calculateScoring(answers);
     const assessmentId = Date.now().toString();
-    const assessmentData = { id: assessmentId, companyInfo, answers, results, createdAt: new Date().toISOString() };
+    const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
+    const userId = currentUser?.uid || (currentUser?.isDemo ? 'demo' : null);
+    const assessmentData = { id: assessmentId, companyInfo, answers, results, createdAt: new Date().toISOString(), userId };
 
     try {
       localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify(assessmentData));
@@ -169,8 +171,9 @@ const Assessment = () => {
       fecha:        new Date().toISOString()
     });
     try {
-      navigator.sendBeacon('https://mairidhmon.app.n8n.cloud/webhook/diagnostico', new Blob([n8nPayload], { type: 'application/json' }));
-    } catch { /* n8n offline: no afecta al usuario */ }
+      const sent = navigator.sendBeacon('https://mairidhmon.app.n8n.cloud/webhook/diagnostico', new Blob([n8nPayload], { type: 'application/json' }));
+      console.log('[n8n] sendBeacon enviado:', sent, JSON.parse(n8nPayload));
+    } catch (e) { console.error('[n8n] sendBeacon falló:', e); }
 
     sessionStorage.removeItem(DRAFT_KEY);
     submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 1800);

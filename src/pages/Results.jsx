@@ -28,7 +28,9 @@ const Results = () => {
         try {
           const parsed = JSON.parse(saved);
           setData(parsed);
-          const all = readFromLocalStorage().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
+          const uid = currentUser?.uid || (currentUser?.isDemo ? 'demo' : null);
+          const all = readFromLocalStorage(uid).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           const idx = all.findIndex(a => a.id === id);
           if (idx !== -1 && idx < all.length - 1) setPrevData(all[idx + 1]);
           return;

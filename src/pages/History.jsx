@@ -19,11 +19,12 @@ const History = () => {
 
   const load = async () => {
     setLoading(true);
-    const local = readFromLocalStorage();
+    const user = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
+    const userId = user?.uid || (user?.isDemo ? 'demo' : null);
+    const local = readFromLocalStorage(userId);
     setAssessments(local.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
 
     try {
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (user?.uid && !user?.isDemo) {
         const remote = await getAssessments(user.uid);
         // Sincronizar los remotos al localStorage para acceso offline

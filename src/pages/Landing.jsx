@@ -8,7 +8,8 @@ const Landing = () => {
   const user = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
   const handleStart = () => navigate(isLoggedIn ? '/assessment' : '/login');
 
-  const allAssessments = readFromLocalStorage().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const userId = user?.uid || (user?.isDemo ? 'demo' : null);
+  const allAssessments = readFromLocalStorage(userId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const lastAssessment = allAssessments[0] || null;
   const hasHistory = allAssessments.length > 0;
 
