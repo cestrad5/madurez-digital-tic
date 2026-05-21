@@ -4,7 +4,8 @@ import { QUESTIONS, DIMENSIONS } from '../lib/questions';
 import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
 import { saveAssessment } from '../lib/db';
-import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail } from 'lucide-react';
+import { REGIONS, COUNTRIES, STATES } from '../lib/locationData';
+import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin } from 'lucide-react';
 
 const SECTOR_ICONS = {
   software:        <Code2 size={18} />,
@@ -37,8 +38,8 @@ const Assessment = () => {
   const [companyInfo, setCompanyInfo] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      return { sector: '', size: '', companyName: '', email: user?.email || '' };
-    } catch { return { sector: '', size: '', companyName: '', email: '' }; }
+      return { sector: '', size: '', companyName: '', email: user?.email || '', region: '', country: '', state: '' };
+    } catch { return { sector: '', size: '', companyName: '', email: '', region: '', country: '', state: '' }; }
   });
   const [answers, setAnswers] = useState({});
   const [advancing, setAdvancing] = useState(false);
@@ -67,7 +68,7 @@ const Assessment = () => {
   }, []);
 
   const startAssessment = () => {
-    if (!companyInfo.sector || !companyInfo.size) return;
+    if (!companyInfo.sector || !companyInfo.size || !companyInfo.region || !companyInfo.country || !companyInfo.state) return;
     sessionStorage.removeItem(DRAFT_KEY);
     setAnswers({});
     setCurrentQuestionIdx(0);
@@ -157,6 +158,9 @@ const Assessment = () => {
     const n8nPayload = JSON.stringify({
       empresa:      companyInfo.companyName || 'Anónimo',
       correo:       companyInfo.email || null,
+      region:       companyInfo.region ? REGIONS.find(r => r.id === companyInfo.region)?.label || companyInfo.region : null,
+      pais:         companyInfo.region && companyInfo.country ? COUNTRIES[companyInfo.region]?.find(c => c.id === companyInfo.country)?.label || companyInfo.country : null,
+      estado:       companyInfo.state || null,
       sector:       SECTORS.find(s => s.id === companyInfo.sector)?.label || companyInfo.sector,
       tamaño:       SIZES.find(z => z.id === companyInfo.size)?.label || companyInfo.size,
       puntajeTotal: results.total,
@@ -219,6 +223,54 @@ const Assessment = () => {
                 onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
                 onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* --- NUEVO: UBICACIÓN --- */}
+        <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+            <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.6rem', borderRadius: '12px' }}><MapPin /></div>
+            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Ubicación Geográfica</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Región */}
+            <div>
+              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem', color: '#374151' }}>Región *</label>
+              <select
+                value={companyInfo.region}
+                onChange={e => setCompanyInfo(prev => ({ ...prev, region: e.target.value, country: '', state: '' }))}
+                style={{ width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', outline: 'none', background: 'white', cursor: 'pointer' }}
+              >
+                <option value="">Seleccione una región</option>
+                {REGIONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              </select>
+            </div>
+            {/* País */}
+            <div>
+              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem', color: '#374151' }}>País *</label>
+              <select
+                value={companyInfo.country}
+                onChange={e => setCompanyInfo(prev => ({ ...prev, country: e.target.value, state: '' }))}
+                disabled={!companyInfo.region}
+                style={{ width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', outline: 'none', background: companyInfo.region ? 'white' : '#F9FAFB', cursor: companyInfo.region ? 'pointer' : 'not-allowed' }}
+              >
+                <option value="">Seleccione un país</option>
+                {companyInfo.region && COUNTRIES[companyInfo.region].map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+            {/* Departamento/Estado */}
+            <div>
+              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.95rem', color: '#374151' }}>Departamento / Estado / Provincia *</label>
+              <select
+                value={companyInfo.state}
+                onChange={e => setCompanyInfo(prev => ({ ...prev, state: e.target.value }))}
+                disabled={!companyInfo.country}
+                style={{ width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', outline: 'none', background: companyInfo.country ? 'white' : '#F9FAFB', cursor: companyInfo.country ? 'pointer' : 'not-allowed' }}
+              >
+                <option value="">Seleccione su estado/departamento</option>
+                {companyInfo.country && STATES[companyInfo.country]?.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
           </div>
         </div>
@@ -288,16 +340,16 @@ const Assessment = () => {
         <div style={{ textAlign: 'center', marginTop: '4rem' }}>
           <button
             type="button"
-            className={(companyInfo.sector && companyInfo.size) ? 'btn-hover' : ''}
+            className={(companyInfo.sector && companyInfo.size && companyInfo.region && companyInfo.country && companyInfo.state) ? 'btn-hover' : ''}
             onClick={startAssessment}
-            disabled={!companyInfo.sector || !companyInfo.size}
+            disabled={!companyInfo.sector || !companyInfo.size || !companyInfo.region || !companyInfo.country || !companyInfo.state}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
               padding: '1.25rem 4rem', borderRadius: 'var(--radius-lg)',
-              background: (companyInfo.sector && companyInfo.size) ? '#1A2E1A' : '#D1D5DB',
+              background: (companyInfo.sector && companyInfo.size && companyInfo.region && companyInfo.country && companyInfo.state) ? '#1A2E1A' : '#D1D5DB',
               color: 'white', fontWeight: 800, fontSize: '1.2rem',
-              cursor: (companyInfo.sector && companyInfo.size) ? 'pointer' : 'not-allowed',
-              boxShadow: (companyInfo.sector && companyInfo.size) ? '0 10px 25px rgba(0,0,0,0.15)' : 'none',
+              cursor: (companyInfo.sector && companyInfo.size && companyInfo.region && companyInfo.country && companyInfo.state) ? 'pointer' : 'not-allowed',
+              boxShadow: (companyInfo.sector && companyInfo.size && companyInfo.region && companyInfo.country && companyInfo.state) ? '0 10px 25px rgba(0,0,0,0.15)' : 'none',
               border: 'none', transition: 'all 0.3s ease'
             }}
           >
