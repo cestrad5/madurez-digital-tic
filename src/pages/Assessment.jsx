@@ -38,7 +38,7 @@ const Assessment = () => {
   const [companyInfo, setCompanyInfo] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      return { sector: '', size: '', companyName: '', email: user?.email || '', region: '', country: '', state: '' };
+      return { sector: '', size: '', companyName: user?.companyName || '', email: user?.email || '', region: '', country: '', state: '' };
     } catch { return { sector: '', size: '', companyName: '', email: '', region: '', country: '', state: '' }; }
   });
   const [answers, setAnswers] = useState({});
@@ -135,6 +135,12 @@ const Assessment = () => {
     const assessmentId = Date.now().toString();
     const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
     const userId = currentUser?.uid || (currentUser?.isDemo ? 'demo' : null);
+    if (currentUser && companyInfo.companyName) {
+      try {
+        localStorage.setItem('user', JSON.stringify({ ...currentUser, companyName: companyInfo.companyName }));
+        window.dispatchEvent(new Event('user-changed'));
+      } catch { /* cuota */ }
+    }
     const assessmentData = { id: assessmentId, companyInfo, answers, results, createdAt: new Date().toISOString(), userId };
 
     try {
