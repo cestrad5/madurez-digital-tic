@@ -60,6 +60,7 @@ const Login = () => {
         navigate(hasHistory ? '/' : '/assessment');
       }
     } catch (err) {
+      console.error('[Google Login Error]', err.code, err.message);
       if (err.code !== 'auth/popup-closed-by-user') {
         setError('No se pudo iniciar sesión con Google. Intenta de nuevo.');
       }
