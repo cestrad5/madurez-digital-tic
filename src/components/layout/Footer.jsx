@@ -7,7 +7,7 @@ const Footer = () => {
       background: 'var(--color-surface)',
       borderTop: '1px solid var(--color-border)',
       padding: '3rem 0',
-      marginTop: 'auto'
+      marginTop: 'auto',
     }}>
       <div className="container" style={{
         display: 'grid',

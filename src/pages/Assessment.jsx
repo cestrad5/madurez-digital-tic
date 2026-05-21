@@ -354,7 +354,7 @@ const Assessment = () => {
       </div>
 
       {/* Barra de progreso */}
-      <div style={{ marginBottom: '3rem' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
           <span style={{ fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: currentDimension?.color || '#4C9B2F' }}>
             {currentDimension?.name}
@@ -376,18 +376,18 @@ const Assessment = () => {
       <div style={{
         background: 'white', borderRadius: 'var(--radius-lg)',
         border: '1px solid #E5E7EB', boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
-        padding: '3rem 3rem 2.5rem',
+        padding: '2rem 2.5rem 1.75rem',
         opacity: advancing ? 0.4 : 1,
         transition: 'opacity 0.2s ease'
       }}>
         <p style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
           Pregunta {currentQuestionIdx + 1}
         </p>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1A2E1A', lineHeight: '1.55', marginBottom: '2.5rem' }}>
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1A2E1A', lineHeight: '1.55', marginBottom: '1.5rem' }}>
           {question.text}
         </h2>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           {question.options.map((opt, i) => {
             const isSelected = selectedValue === opt.value;
             const { css: color, hex: colorHex } = SCALE_COLORS[i];
@@ -397,8 +397,8 @@ const Assessment = () => {
                 type="button"
                 onClick={() => handleAnswer(opt.value)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '1.25rem',
-                  padding: '1.1rem 1.5rem', borderRadius: 'var(--radius)', textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: '1rem',
+                  padding: '0.75rem 1.25rem', borderRadius: 'var(--radius)', textAlign: 'left',
                   cursor: 'pointer', width: '100%',
                   border: isSelected ? `2px solid ${color}` : '2px solid #E5E7EB',
                   background: isSelected ? `${colorHex}12` : 'white',
@@ -408,9 +408,9 @@ const Assessment = () => {
                 }}
               >
                 <span style={{
-                  width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                  width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 900, fontSize: '0.9rem',
+                  fontWeight: 900, fontSize: '0.85rem',
                   background: isSelected ? color : '#F3F4F6',
                   color: isSelected ? 'white' : '#6B7280'
                 }}>
