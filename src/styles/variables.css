@@ -13,23 +13,40 @@
   /* Level Colors */
   --level-1: #E53E3E;
   --level-2: #DD6B20;
-  --level-3: #D69E2E;
+  --level-3: #B45309;
   --level-4: #38A169;
   --level-5: #4C9B2F;
 
   /* Typography */
   --font-heading: 'Montserrat', sans-serif;
   --font-body: 'Open Sans', sans-serif;
+  --h1-size: 3.5rem;
+  --h2-size: 2.5rem;
+  --h3-size: 1.5rem;
+
+  /* Score colors */
+  --color-score-high: #4C9B2F;
+  --color-score-mid: #B45309;
+  --color-score-low: #E53E3E;
+
+  /* Semantic colors */
+  --color-primary-light: #F0FDF4;
+  --color-danger: #DC2626;
+  --color-danger-light: #FEF2F2;
+  --color-danger-border: #FECACA;
+  --color-warning: #92400E;
+  --color-warning-light: #FEF3C7;
+  --color-warning-border: #FDE68A;
 
   /* Spacing & Effects */
   --radius: 12px;
   --radius-lg: 20px;
   --shadow: 0 4px 24px rgba(76, 155, 47, 0.12);
   --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
-  
+  --shadow-card: 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-card-lg: 0 10px 25px rgba(0,0,0,0.06);
+
   /* Transitions */
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark mode desactivado - Tema siempre claro para consistencia de marca */
-/* @media (prefers-color-scheme: dark) { ... } */

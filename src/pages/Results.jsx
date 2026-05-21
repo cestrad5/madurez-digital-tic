@@ -2,28 +2,62 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Legend } from 'recharts';
 import { getBenchmarkForCompany } from '../lib/benchmark';
-import { FileDown, ArrowRight, Award, TrendingUp, Target, ShieldCheck } from 'lucide-react';
+import { getAssessment } from '../lib/db';
+import { FileDown, ArrowRight, Award, TrendingUp, TrendingDown, Target, ShieldCheck, Share2, Check, Users, Star } from 'lucide-react';
+import { getScoreColor, getScoreLevelLabel, readFromLocalStorage } from '../lib/utils';
 
 const Results = () => {
   const { id } = useParams();
   const [data, setData] = useState(null);
+  const [prevData, setPrevData] = useState(null);
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  };
+
   useEffect(() => {
-    const saved = localStorage.getItem(`assessment_${id}`);
-    if (!saved) {
+    const load = async () => {
+      // 1. Intentar localStorage (path rápido — siempre disponible justo tras el assessment)
+      const saved = localStorage.getItem(`assessment_${id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setData(parsed);
+          const all = readFromLocalStorage().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          const idx = all.findIndex(a => a.id === id);
+          if (idx !== -1 && idx < all.length - 1) setPrevData(all[idx + 1]);
+          return;
+        } catch { localStorage.removeItem(`assessment_${id}`); }
+      }
+
+      // 2. Fallback a Firestore (otro dispositivo, historial sincronizado)
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (user?.uid && !user?.isDemo) {
+          const remote = await getAssessment(user.uid, id);
+          if (remote) {
+            try { localStorage.setItem(`assessment_${id}`, JSON.stringify(remote)); } catch { /* cuota */ }
+            setData(remote);
+            return;
+          }
+        }
+      } catch { /* sin red */ }
+
       navigate('/');
-      return;
-    }
-    try {
-      setData(JSON.parse(saved));
-    } catch {
-      localStorage.removeItem(`assessment_${id}`);
-      navigate('/');
-    }
+    };
+    load();
   }, [id, navigate]);
 
-  if (!data) return null;
+  if (!data) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+      <div className="spinner" />
+    </div>
+  );
 
   const { results, companyInfo } = data;
   const benchmark = getBenchmarkForCompany(companyInfo?.sector, companyInfo?.size);
@@ -37,7 +71,7 @@ const Results = () => {
   ];
 
   return (
-    <div className="container" style={{ padding: '3rem 0' }}>
+    <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
       {/* Header Reporte */}
       <div style={{ 
         display: 'flex', 
@@ -50,37 +84,145 @@ const Results = () => {
         paddingBottom: '2rem'
       }}>
         <div>
-          <h1 style={{ fontSize: '2.5rem', color: '#1A2E1A', marginBottom: '0.5rem' }}>Diagnóstico de Madurez Digital</h1>
-          <p style={{ color: '#6B7280', fontWeight: 600 }}>Identificador: <span style={{ color: '#4C9B2F' }}>#{id}</span> • Generado el {new Date(data.createdAt).toLocaleDateString()}</p>
+          <h1 style={{ color: '#1A2E1A', marginBottom: '0.5rem' }}>
+            {data.companyInfo?.companyName ? `${data.companyInfo.companyName}` : 'Diagnóstico de Madurez Digital'}
+          </h1>
+          {data.companyInfo?.companyName && (
+            <p style={{ color: '#4C9B2F', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>
+              Diagnóstico de Madurez Digital
+            </p>
+          )}
+          <p style={{ color: '#6B7280', fontWeight: 600 }}>
+            {new Date(data.createdAt).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            <span style={{ opacity: 0.5, fontSize: '0.82rem', marginLeft: '0.5rem' }}>· ref #{id.slice(-6)}</span>
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="no-print"
-          style={{
-            padding: '0.8rem 1.8rem',
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.6rem',
-            fontWeight: 700,
-            background: '#1A2E1A',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            border: 'none'
-          }}
-        >
-          <FileDown size={20} /> Guardar Reporte PDF
-        </button>
+        <div className="no-print" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={handleShare}
+            style={{
+              padding: '0.8rem 1.5rem', borderRadius: 'var(--radius)',
+              display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 700,
+              background: copied ? '#F0FDF4' : 'white',
+              color: copied ? '#166534' : '#4B5563',
+              cursor: 'pointer',
+              border: `1px solid ${copied ? '#86EFAC' : '#E5E7EB'}`,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {copied
+              ? <><Check size={18} /> ¡Enlace copiado!</>
+              : <><Share2 size={18} /> Compartir</>
+            }
+          </button>
+          {copied && (
+            <p style={{ width: '100%', textAlign: 'right', fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 600, marginTop: '-0.5rem' }}>
+              El enlace funciona en otros dispositivos si inició sesión con Google
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-hover"
+            onClick={() => navigate('/assessment')}
+            style={{
+              padding: '0.8rem 1.5rem',
+              borderRadius: 'var(--radius)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              fontWeight: 700,
+              background: '#F3F4F6',
+              color: '#4B5563',
+              cursor: 'pointer',
+              border: '1px solid #E5E7EB'
+            }}
+          >
+            <ArrowRight size={18} /> Nuevo Diagnóstico
+          </button>
+          <button
+            type="button"
+            className="btn-hover"
+            onClick={() => window.print()}
+            style={{
+              padding: '0.8rem 1.8rem',
+              borderRadius: 'var(--radius)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              fontWeight: 700,
+              background: '#1A2E1A',
+              color: 'white',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              border: 'none'
+            }}
+          >
+            <FileDown size={20} /> Guardar Reporte PDF
+          </button>
+        </div>
       </div>
+
+      {/* Comparativa vs. diagnóstico anterior */}
+      {prevData && (() => {
+        const delta = results.total - prevData.results.total;
+        const isUp = delta >= 0;
+        const dims = ['D1','D2','D3','D4','D5'];
+        const dimLabels = { D1: 'Est', D2: 'Tec', D3: 'Tal', D4: 'Dat', D5: 'Cli' };
+        return (
+          <div style={{
+            marginBottom: '2rem',
+            background: isUp ? '#F0FDF4' : '#FFF7ED',
+            border: `1px solid ${isUp ? '#BBF7D0' : '#FED7AA'}`,
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem 1.75rem',
+            display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <span style={{ display: 'flex', color: isUp ? '#166534' : '#9A3412' }}>{isUp ? <TrendingUp size={28} /> : <TrendingDown size={28} />}</span>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: isUp ? '#166534' : '#9A3412' }}>
+                  Evolución vs. diagnóstico anterior
+                </p>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+                  {new Date(prevData.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {prevData.companyInfo?.companyName && ` · ${prevData.companyInfo.companyName}`}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: isUp ? '#166534' : '#9A3412' }}>
+                {isUp ? `+${delta}` : delta} pts
+              </span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+                ({prevData.results.total} → {results.total})
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginLeft: 'auto' }}>
+              {dims.map(d => {
+                const diff = (results[d] ?? 0) - (prevData.results[d] ?? 0);
+                return (
+                  <span key={d} style={{
+                    fontSize: '0.72rem', fontWeight: 800, padding: '0.2rem 0.6rem',
+                    borderRadius: '100px',
+                    background: diff > 0 ? '#DCFCE7' : diff < 0 ? '#FEE2E2' : '#F3F4F6',
+                    color: diff > 0 ? '#166534' : diff < 0 ? '#991B1B' : '#6B7280'
+                  }}>
+                    {dimLabels[d]} {diff > 0 ? `+${diff}` : diff}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', marginBottom: '4rem' }}>
         {/* Main Score Card */}
         <div style={{ 
           background: 'white',
           padding: '3rem', 
-          borderRadius: '20px', 
+          borderRadius: 'var(--radius-lg)', 
           textAlign: 'center', 
           border: '1px solid #e5e7eb',
           boxShadow: '0 10px 25px rgba(0,0,0,0.04)',
@@ -90,7 +232,7 @@ const Results = () => {
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '8px', background: `var(--level-${results.levelInfo.level})` }}></div>
           <p style={{ textTransform: 'uppercase', fontSize: '0.85rem', fontWeight: 800, color: '#6B7280', letterSpacing: '1.5px', marginBottom: '1rem' }}>Puntaje Global</p>
           <div style={{ fontSize: '6rem', fontWeight: 900, color: '#1A2E1A', lineHeight: 1 }}>
-            {results.total}<span style={{ fontSize: '1.5rem', color: '#9CA3AF' }}>/100</span>
+            {results.total}<span style={{ fontSize: '1.5rem', color: 'var(--color-text-muted)' }}>/100</span>
           </div>
           <div style={{ marginTop: '2rem' }}>
             <div style={{ 
@@ -114,7 +256,7 @@ const Results = () => {
         <div style={{ 
           background: 'white',
           padding: '2.5rem', 
-          borderRadius: '20px', 
+          borderRadius: 'var(--radius-lg)', 
           border: '1px solid #e5e7eb',
           boxShadow: '0 10px 25px rgba(0,0,0,0.04)',
           display: 'flex', 
@@ -140,34 +282,58 @@ const Results = () => {
       <h2 style={{ marginBottom: '2rem', fontSize: '1.8rem', fontWeight: 800 }}>Análisis Detallado por Área</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '5rem' }}>
         {[
-          { id: 'D1', label: 'Estrategia', val: results.D1, icon: <Award size={20} /> },
-          { id: 'D2', label: 'Tecnología', val: results.D2, icon: <TrendingUp size={20} /> },
-          { id: 'D3', label: 'Talento', val: results.D3, icon: <Award size={20} /> },
-          { id: 'D4', label: 'Datos', val: results.D4, icon: <Target size={20} /> },
-          { id: 'D5', label: 'Cliente', val: results.D5, icon: <TrendingUp size={20} /> },
+          { id: 'D1', label: 'Estrategia', val: results.D1, bm: benchmark.D1, icon: <Award size={18} /> },
+          { id: 'D2', label: 'Tecnología', val: results.D2, bm: benchmark.D2, icon: <TrendingUp size={18} /> },
+          { id: 'D3', label: 'Talento', val: results.D3, bm: benchmark.D3, icon: <Users size={18} /> },
+          { id: 'D4', label: 'Datos', val: results.D4, bm: benchmark.D4, icon: <Target size={18} /> },
+          { id: 'D5', label: 'Cliente', val: results.D5, bm: benchmark.D5, icon: <Star size={18} /> },
         ].map(dim => {
-          const color = dim.val > 70 ? '#4C9B2F' : dim.val > 40 ? '#D69E2E' : '#E53E3E';
+          const color = getScoreColor(dim.val);
+          const levelLabel = getScoreLevelLabel(dim.val);
+          const vsMarket = dim.val - dim.bm;
           return (
-            <div key={dim.id} style={{ 
+            <div key={dim.id} className="card-hover" style={{
               background: 'white',
-              padding: '1.8rem', 
-              borderRadius: '16px', 
+              padding: '1.75rem',
+              borderRadius: 'var(--radius-lg)',
               border: '1px solid #e5e7eb',
-              borderBottom: `5px solid ${color}`,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+              borderLeft: `4px solid ${color}`,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.1rem'
             }}>
-              <div style={{ color: '#6B7280', fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {dim.icon} {dim.label}
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <div style={{ background: `${color}18`, color, padding: '0.4rem', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center' }}>
+                    {dim.icon}
+                  </div>
+                  <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#374151' }}>{dim.label}</span>
+                </div>
+                <span className="badge" style={{ background: `${color}15`, color, whiteSpace: 'nowrap' }}>
+                  {levelLabel}
+                </span>
               </div>
-              <div style={{ fontSize: '2.2rem', fontWeight: 900, margin: '0.75rem 0', color: '#1A2E1A' }}>{dim.val}%</div>
-              <div style={{ background: '#F3F4F6', height: '8px', borderRadius: '4px' }}>
-                <div style={{ 
-                  background: color, 
-                  width: `${dim.val}%`, 
-                  height: '100%', 
-                  borderRadius: '4px',
-                  transition: 'width 1s ease-out'
-                }}></div>
+
+              {/* Puntaje */}
+              <div style={{ lineHeight: 1 }}>
+                <span style={{ fontSize: '2.6rem', fontWeight: 900, color }}>{dim.val}</span>
+                <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>/100</span>
+              </div>
+
+              {/* Barra de progreso */}
+              <div>
+                <div style={{ background: '#F3F4F6', height: '8px', borderRadius: '4px', position: 'relative' }}>
+                  <div style={{ background: color, width: `${dim.val}%`, height: '100%', borderRadius: '4px', transition: 'width 1s ease-out' }} />
+                  <div style={{ position: 'absolute', top: '-3px', left: `${dim.bm}%`, width: '3px', height: '14px', background: '#9CA3AF', borderRadius: '2px', transform: 'translateX(-50%)' }} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Benchmark: {dim.bm}%</span>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: vsMarket >= 0 ? '#4C9B2F' : '#E53E3E' }}>
+                    {vsMarket >= 0 ? `+${vsMarket}` : vsMarket} pts vs mercado
+                  </span>
+                </div>
               </div>
             </div>
           );
@@ -179,7 +345,7 @@ const Results = () => {
         background: '#1A2E1A', 
         color: 'white', 
         padding: '3.5rem', 
-        borderRadius: '24px', 
+        borderRadius: 'var(--radius-lg)', 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
@@ -198,7 +364,7 @@ const Results = () => {
             background: '#4C9B2F',
             color: 'white',
             padding: '1.2rem 2.5rem',
-            borderRadius: '12px',
+            borderRadius: 'var(--radius)',
             fontWeight: 800,
             fontSize: '1.1rem',
             display: 'flex',

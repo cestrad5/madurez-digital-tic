@@ -1,145 +1,284 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QUESTIONS, DIMENSIONS } from '../lib/questions';
 import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
-import { ChevronRight, ChevronLeft, Building2, Users } from 'lucide-react';
+import { saveAssessment } from '../lib/db';
+import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail } from 'lucide-react';
 
-const SCALE_COLORS = ['#E53E3E', '#DD6B20', '#D69E2E', '#76B852', '#4C9B2F'];
+const SECTOR_ICONS = {
+  software:        <Code2 size={18} />,
+  servicios_ti:    <Shield size={18} />,
+  infraestructura: <Server size={18} />,
+  edtech:          <GraduationCap size={18} />,
+  fintech:         <CreditCard size={18} />,
+  telecom:         <Radio size={18} />,
+};
+const SIZE_ICONS = {
+  micro:    <User size={18} />,
+  pequena:  <Users size={18} />,
+  mediana:  <Building size={18} />,
+  grande:   <Building2 size={18} />,
+};
+
+const DRAFT_KEY = 'assessment_draft';
+
+const SCALE_COLORS = [
+  { css: 'var(--level-1)', hex: '#E53E3E' },
+  { css: 'var(--level-2)', hex: '#DD6B20' },
+  { css: 'var(--level-3)', hex: '#B45309' },
+  { css: 'var(--level-4)', hex: '#38A169' },
+  { css: 'var(--level-5)', hex: '#4C9B2F' },
+];
 
 const Assessment = () => {
-  const [step, setStep] = useState('profile'); // 'profile' or 'questions'
-  const [currentDimensionIdx, setCurrentDimensionIdx] = useState(0);
-  const [companyInfo, setCompanyInfo] = useState({ sector: '', size: '' });
+  const [step, setStep] = useState('profile');
+  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [companyInfo, setCompanyInfo] = useState(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      return { sector: '', size: '', companyName: '', email: user?.email || '' };
+    } catch { return { sector: '', size: '', companyName: '', email: '' }; }
+  });
   const [answers, setAnswers] = useState({});
+  const [advancing, setAdvancing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const submitTimerRef = useRef(null);
 
+  // Restore draft on mount
   useEffect(() => {
+    try {
+      const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+      if (draft?.answers && draft?.companyInfo?.sector) {
+        setCompanyInfo(draft.companyInfo);
+        setAnswers(draft.answers);
+        setCurrentQuestionIdx(draft.questionIdx ?? 0);
+        setStep('questions');
+      }
+    } catch { /* draft corrupto, ignorar */ }
     return () => clearTimeout(submitTimerRef.current);
   }, []);
 
-  const handleAnswer = (questionId, value) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
-  };
+  const saveDraft = useCallback((newAnswers, qIdx, info) => {
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ answers: newAnswers, questionIdx: qIdx, companyInfo: info }));
+    } catch { /* cuota agotada, no bloquear */ }
+  }, []);
 
   const startAssessment = () => {
-    if (companyInfo.sector && companyInfo.size) {
-      setStep('questions');
-      window.scrollTo(0, 0);
-    }
+    if (!companyInfo.sector || !companyInfo.size) return;
+    sessionStorage.removeItem(DRAFT_KEY);
+    setAnswers({});
+    setCurrentQuestionIdx(0);
+    setStep('questions');
+    window.scrollTo(0, 0);
   };
 
-  const currentDimension = DIMENSIONS[currentDimensionIdx];
-  const dimensionQuestions = QUESTIONS.filter(q => q.dimension === currentDimension.id);
-  const isDimensionComplete = dimensionQuestions.every(q => answers[q.id] !== undefined);
+  const question = QUESTIONS[currentQuestionIdx];
+  const currentDimension = DIMENSIONS.find(d => d.id === question?.dimension);
+  const dimQuestions = QUESTIONS.filter(q => q.dimension === question?.dimension);
+  const dimQuestionPos = dimQuestions.findIndex(q => q.id === question?.id) + 1;
+  const progress = Math.round(((currentQuestionIdx + (answers[question?.id] !== undefined ? 1 : 0)) / QUESTIONS.length) * 100);
+  const isLast = currentQuestionIdx === QUESTIONS.length - 1;
 
-  const nextStep = () => {
-    if (currentDimensionIdx < DIMENSIONS.length - 1) {
-      setCurrentDimensionIdx(prev => prev + 1);
-      window.scrollTo(0, 0);
-    } else {
-      handleSubmit();
+  const goNext = useCallback(() => {
+    if (currentQuestionIdx < QUESTIONS.length - 1) {
+      setCurrentQuestionIdx(i => i + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
+  }, [currentQuestionIdx]);
 
-  const handleSubmit = () => {
+  const goPrev = useCallback(() => {
+    if (currentQuestionIdx > 0) {
+      setCurrentQuestionIdx(i => i - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentQuestionIdx]);
+
+  const handleAnswer = useCallback((value) => {
+    if (advancing) return;
+    const newAnswers = { ...answers, [question.id]: value };
+    setAnswers(newAnswers);
+    const nextIdx = currentQuestionIdx + 1;
+    saveDraft(newAnswers, nextIdx < QUESTIONS.length ? nextIdx : currentQuestionIdx, companyInfo);
+
+    if (isLast) return; // stay — submit button appears
+
+    setAdvancing(true);
+    submitTimerRef.current = setTimeout(() => {
+      setCurrentQuestionIdx(i => i + 1);
+      setAdvancing(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 380);
+  }, [advancing, answers, question, currentQuestionIdx, isLast, companyInfo, saveDraft]);
+
+  // Keyboard 1-5 to answer, ← → to navigate
+  useEffect(() => {
+    if (step !== 'questions') return;
+    const handler = (e) => {
+      const n = parseInt(e.key);
+      if (n >= 1 && n <= 5) { handleAnswer(n); return; }
+      if ((e.key === 'ArrowRight' || e.key === 'Enter') && answers[question?.id] !== undefined) { goNext(); return; }
+      if (e.key === 'ArrowLeft') { goPrev(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [step, handleAnswer, goNext, goPrev, answers, question]);
+
+  const handleSubmit = async () => {
+    const allAnswered = QUESTIONS.every(q => answers[q.id] !== undefined);
+    if (!allAnswered) return;
     setIsSubmitting(true);
     const results = calculateScoring(answers);
     const assessmentId = Date.now().toString();
+    const assessmentData = { id: assessmentId, companyInfo, answers, results, createdAt: new Date().toISOString() };
 
     try {
-      localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify({
-        id: assessmentId,
-        companyInfo,
-        answers,
-        results,
-        createdAt: new Date().toISOString()
-      }));
+      localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify(assessmentData));
     } catch (e) {
       if (e instanceof DOMException && e.name === 'QuotaExceededError') {
         setIsSubmitting(false);
-        alert('No hay espacio suficiente en el navegador para guardar este diagnóstico. Elimine diagnósticos anteriores desde el Historial e intente de nuevo.');
+        alert('No hay espacio en el navegador. Elimine diagnósticos anteriores desde el Historial.');
         return;
       }
       throw e;
     }
 
-    submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 2000);
+    // Guardar en Firestore si el usuario es real
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user?.uid && !user?.isDemo) {
+        await saveAssessment(user.uid, assessmentData);
+      }
+    } catch { /* fallo de red: los datos ya están en localStorage */ }
+
+    // Enviar a n8n (fire-and-forget — no bloquea al usuario)
+    const n8nPayload = JSON.stringify({
+      empresa:      companyInfo.companyName || 'Anónimo',
+      correo:       companyInfo.email || null,
+      sector:       SECTORS.find(s => s.id === companyInfo.sector)?.label || companyInfo.sector,
+      tamaño:       SIZES.find(z => z.id === companyInfo.size)?.label || companyInfo.size,
+      puntajeTotal: results.total,
+      nivel:        results.levelInfo.name,
+      dimensiones:  { D1: results.D1, D2: results.D2, D3: results.D3, D4: results.D4, D5: results.D5 },
+      fecha:        new Date().toISOString()
+    });
+    try {
+      navigator.sendBeacon('https://mairidhmon.app.n8n.cloud/webhook/diagnostico', new Blob([n8nPayload], { type: 'application/json' }));
+    } catch { /* n8n offline: no afecta al usuario */ }
+
+    sessionStorage.removeItem(DRAFT_KEY);
+    submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 1800);
   };
 
-  // --- RENDER: PASO DE PERFIL DE EMPRESA ---
+  // ─── PERFIL ───────────────────────────────────────────────────────────────
   if (step === 'profile') {
     return (
-      <div className="container" style={{ padding: '4rem 1.5rem', maxWidth: '900px' }}>
+      <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem', maxWidth: '900px' }}>
         <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-          <h1 style={{ fontSize: '2.8rem', color: '#1A2E1A', marginBottom: '1rem' }}>Personalice su Diagnóstico</h1>
-          <p style={{ color: '#6B7280', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto' }}>
+          <h1 style={{ color: '#1A2E1A', marginBottom: '1rem' }}>Personalice su Diagnóstico</h1>
+          <p style={{ color: '#6B7280', fontSize: '1.1rem', maxWidth: '600px', margin: '0 auto 1.25rem auto' }}>
             Para compararlo con el mercado regional, necesitamos conocer el perfil de su organización.
           </p>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#F0FDF4', color: '#166534', fontSize: '0.82rem', fontWeight: 700, padding: '0.35rem 1rem', borderRadius: '100px', border: '1px solid #BBF7D0' }}>
+            <Clock size={13} /> Aproximadamente 10 minutos · 30 preguntas en 5 dimensiones
+          </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2.5rem' }}>
+        {/* Nombre de empresa + Email (opcionales) */}
+        <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div>
+            <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
+              Nombre de su empresa <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional)</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Ej: TechSolutions S.A.S."
+              value={companyInfo.companyName}
+              onChange={e => setCompanyInfo(prev => ({ ...prev, companyName: e.target.value }))}
+              maxLength={80}
+              style={{ width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+              onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
+              onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
+              Correo electrónico <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional · para recibir sus resultados)</span>
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} />
+              <input
+                type="email"
+                placeholder="correo@empresa.com"
+                value={companyInfo.email}
+                onChange={e => setCompanyInfo(prev => ({ ...prev, email: e.target.value }))}
+                maxLength={120}
+                style={{ width: '100%', padding: '0.875rem 1.25rem 0.875rem 2.75rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
+                onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(350px, 100%), 1fr))', gap: '2.5rem' }}>
           {/* Sub-Sector */}
-          <div style={{ background: 'white', padding: '2.5rem', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
               <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.6rem', borderRadius: '12px' }}><Building2 /></div>
               <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Sub-sector TIC</h3>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {SECTORS.map(s => (
-                <div 
-                  key={s.id} 
+                <div
+                  key={s.id}
                   role="button"
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, sector: s.id }))}
                   onClick={() => setCompanyInfo(prev => ({ ...prev, sector: s.id }))}
+                  className="card-hover"
                   style={{
-                    padding: '1rem 1.25rem',
-                    borderRadius: '14px',
+                    padding: '1rem 1.25rem', borderRadius: 'var(--radius)',
                     border: companyInfo.sector === s.id ? '2px solid #4C9B2F' : '1px solid #E5E7EB',
                     background: companyInfo.sector === s.id ? '#F0FDF4' : 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    transition: 'all 0.2s ease',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem',
                     fontWeight: companyInfo.sector === s.id ? 700 : 500,
                     color: companyInfo.sector === s.id ? '#166534' : '#374151'
                   }}
                 >
-                  <span style={{ fontSize: '1.2rem' }}>{s.icon}</span> {s.label}
+                  <span style={{ display: 'flex', alignItems: 'center' }}>{SECTOR_ICONS[s.id]}</span> {s.label}
                 </div>
               ))}
             </div>
           </div>
 
           {/* Tamaño */}
-          <div style={{ background: 'white', padding: '2.5rem', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+          <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
               <div style={{ background: '#EFF6FF', color: '#3182CE', padding: '0.6rem', borderRadius: '12px' }}><Users /></div>
               <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Tamaño de Empresa</h3>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {SIZES.map(z => (
-                <div 
-                  key={z.id} 
+                <div
+                  key={z.id}
                   role="button"
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, size: z.id }))}
                   onClick={() => setCompanyInfo(prev => ({ ...prev, size: z.id }))}
+                  className="card-hover"
                   style={{
-                    padding: '1rem 1.25rem',
-                    borderRadius: '14px',
+                    padding: '1rem 1.25rem', borderRadius: 'var(--radius)',
                     border: companyInfo.size === z.id ? '2px solid #3182CE' : '1px solid #E5E7EB',
                     background: companyInfo.size === z.id ? '#EFF6FF' : 'white',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    transition: 'all 0.2s ease',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem',
                     fontWeight: companyInfo.size === z.id ? 700 : 500,
                     color: companyInfo.size === z.id ? '#1E40AF' : '#374151'
                   }}
                 >
-                  <span style={{ fontSize: '1.2rem' }}>{z.icon}</span> {z.label}
+                  <span style={{ display: 'flex', alignItems: 'center' }}>{SIZE_ICONS[z.id]}</span> {z.label}
                 </div>
               ))}
             </div>
@@ -149,22 +288,17 @@ const Assessment = () => {
         <div style={{ textAlign: 'center', marginTop: '4rem' }}>
           <button
             type="button"
+            className={(companyInfo.sector && companyInfo.size) ? 'btn-hover' : ''}
             onClick={startAssessment}
             disabled={!companyInfo.sector || !companyInfo.size}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              padding: '1.25rem 4rem',
-              borderRadius: '16px',
+              display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
+              padding: '1.25rem 4rem', borderRadius: 'var(--radius-lg)',
               background: (companyInfo.sector && companyInfo.size) ? '#1A2E1A' : '#D1D5DB',
-              color: 'white',
-              fontWeight: 800,
-              fontSize: '1.2rem',
+              color: 'white', fontWeight: 800, fontSize: '1.2rem',
               cursor: (companyInfo.sector && companyInfo.size) ? 'pointer' : 'not-allowed',
-              transition: 'all 0.3s ease',
               boxShadow: (companyInfo.sector && companyInfo.size) ? '0 10px 25px rgba(0,0,0,0.15)' : 'none',
-              border: 'none'
+              border: 'none', transition: 'all 0.3s ease'
             }}
           >
             Comenzar Diagnóstico <ChevronRight />
@@ -174,123 +308,202 @@ const Assessment = () => {
     );
   }
 
-  // --- RENDER: PANTALLA DE CARGA ---
+  // ─── ENVIANDO ─────────────────────────────────────────────────────────────
   if (isSubmitting) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', gap: '2rem' }}>
-        <div style={{ width: '64px', height: '64px', border: '6px solid #F3F4F6', borderTop: '6px solid #4C9B2F', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <div className="spinner" style={{ width: '64px', height: '64px', borderWidth: '6px' }}></div>
         <div style={{ textAlign: 'center' }}>
           <h2 style={{ fontSize: '2rem', color: '#1A2E1A' }}>Analizando su madurez...</h2>
-          <p style={{ color: '#6B7280', fontSize: '1.1rem' }}>Comparando resultados con empresas del sector <span style={{ fontWeight: 700 }}>{SECTORS.find(s => s.id === companyInfo.sector)?.label}</span>.</p>
+          <p style={{ color: '#6B7280', fontSize: '1.1rem' }}>
+            Comparando con empresas del sector <strong>{SECTORS.find(s => s.id === companyInfo.sector)?.label}</strong>.
+          </p>
         </div>
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // --- RENDER: FORMULARIO DE DIAGNÓSTICO (REDiseño UX) ---
+  // ─── PREGUNTA ─────────────────────────────────────────────────────────────
+  const selectedValue = answers[question.id];
+  const allAnswered = QUESTIONS.every(q => answers[q.id] !== undefined);
 
   return (
-    <div className="container" style={{ padding: '4rem 1.5rem', maxWidth: '850px' }}>
-      {/* Progress Bar */}
-      <div style={{ marginBottom: '3.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <span style={{ fontWeight: 800, color: '#4C9B2F', textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.85rem' }}>
-            {currentDimension.name}
+    <div className="container" style={{ paddingTop: '3rem', paddingBottom: '3rem', maxWidth: '780px' }}>
+
+      {/* Mapa de 5 dimensiones */}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '1.25rem' }}>
+        {DIMENSIONS.map(dim => {
+          const dimQs = QUESTIONS.filter(q => q.dimension === dim.id);
+          const answered = dimQs.filter(q => answers[q.id] !== undefined).length;
+          const isActive = dim.id === question?.dimension;
+          const isComplete = answered === dimQs.length;
+          const isTouched = answered > 0 && !isComplete;
+          return (
+            <div
+              key={dim.id}
+              title={`${dim.name}: ${answered}/${dimQs.length}`}
+              style={{
+                flex: 1, height: '8px', borderRadius: '100px',
+                background: isComplete ? dim.color : isTouched ? `${dim.color}60` : '#E5E7EB',
+                boxShadow: isActive ? `0 0 0 3px ${dim.color}30` : 'none',
+                transition: 'all 0.3s ease'
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Barra de progreso */}
+      <div style={{ marginBottom: '3rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem' }}>
+          <span style={{ fontWeight: 800, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: currentDimension?.color || '#4C9B2F' }}>
+            {currentDimension?.name}
           </span>
-          <span style={{ color: '#6B7280', fontWeight: 600 }}>{currentDimensionIdx + 1} / {DIMENSIONS.length}</span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+            · {dimQuestionPos} de {dimQuestions.length} en esta área
+          </span>
         </div>
-        <div style={{ height: '8px', background: '#F3F4F6', borderRadius: '100px', overflow: 'hidden', display: 'flex', gap: '4px' }}>
-          {DIMENSIONS.map((_, i) => (
-            <div key={i} style={{ flex: 1, background: i <= currentDimensionIdx ? '#4C9B2F' : 'transparent', borderRadius: '100px', transition: 'all 0.4s ease' }}></div>
-          ))}
+        <div style={{ height: '6px', background: '#F3F4F6', borderRadius: '100px', overflow: 'hidden' }}>
+          <div style={{
+            width: `${progress}%`, height: '100%',
+            background: `linear-gradient(90deg, #4C9B2F, ${currentDimension?.color || '#4C9B2F'})`,
+            borderRadius: '100px', transition: 'width 0.4s ease'
+          }} />
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-        {dimensionQuestions.map((q, idx) => (
-          <div key={q.id} style={{ background: 'white', padding: '2.5rem', borderRadius: '24px', border: '1px solid #E5E7EB', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#1A2E1A', marginBottom: '2rem', lineHeight: '1.5' }}>
-              <span style={{ color: '#9CA3AF', marginRight: '0.75rem' }}>{idx + 1}.</span>
-              {q.text}
-            </h3>
+      {/* Tarjeta de pregunta */}
+      <div style={{
+        background: 'white', borderRadius: 'var(--radius-lg)',
+        border: '1px solid #E5E7EB', boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
+        padding: '3rem 3rem 2.5rem',
+        opacity: advancing ? 0.4 : 1,
+        transition: 'opacity 0.2s ease'
+      }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+          Pregunta {currentQuestionIdx + 1}
+        </p>
+        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#1A2E1A', lineHeight: '1.55', marginBottom: '2.5rem' }}>
+          {question.text}
+        </h2>
 
-            {/* SEGMENTED CONTROL UI (NUEVA UX) */}
-            <div style={{ 
-              display: 'flex', 
-              background: '#F9FAFB', 
-              padding: '0.5rem', 
-              borderRadius: '20px', 
-              border: '1px solid #E5E7EB',
-              gap: '0.5rem',
-              position: 'relative'
-            }}>
-              {q.options.map((opt, i) => {
-                const isSelected = answers[q.id] === opt.value;
-                return (
-                  <div 
-                    key={opt.value}
-                    role="button"
-                    onClick={() => handleAnswer(q.id, opt.value)}
-                    style={{
-                      flex: 1,
-                      padding: '1.25rem 0.5rem',
-                      borderRadius: '16px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      background: isSelected ? SCALE_COLORS[i] : 'transparent',
-                      color: isSelected ? 'white' : '#4B5563',
-                      boxShadow: isSelected ? `0 8px 20px ${SCALE_COLORS[i]}44` : 'none',
-                      transform: isSelected ? 'scale(1.02)' : 'scale(1)',
-                      zIndex: isSelected ? 2 : 1
-                    }}
-                  >
-                    <div style={{ fontSize: '1.4rem', fontWeight: 900, marginBottom: '0.25rem' }}>{opt.value}</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', opacity: isSelected ? 1 : 0.7 }}>{opt.label.split(' / ')[0]}</div>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Legend for the scale */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', padding: '0 1rem' }}>
-              <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 600 }}>Nivel Inicial</span>
-              <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 600 }}>Nivel Optimizado</span>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {question.options.map((opt, i) => {
+            const isSelected = selectedValue === opt.value;
+            const { css: color, hex: colorHex } = SCALE_COLORS[i];
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleAnswer(opt.value)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '1.25rem',
+                  padding: '1.1rem 1.5rem', borderRadius: 'var(--radius)', textAlign: 'left',
+                  cursor: 'pointer', width: '100%',
+                  border: isSelected ? `2px solid ${color}` : '2px solid #E5E7EB',
+                  background: isSelected ? `${colorHex}12` : 'white',
+                  transition: 'all 0.18s ease',
+                  transform: isSelected ? 'scale(1.01)' : 'scale(1)',
+                  boxShadow: isSelected ? `0 4px 16px ${colorHex}30` : 'none'
+                }}
+              >
+                <span style={{
+                  width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 900, fontSize: '0.9rem',
+                  background: isSelected ? color : '#F3F4F6',
+                  color: isSelected ? 'white' : '#6B7280'
+                }}>
+                  {opt.value}
+                </span>
+                <div>
+                  <p style={{ fontWeight: isSelected ? 700 : 500, color: isSelected ? '#1A2E1A' : '#374151', fontSize: '0.98rem', margin: 0 }}>
+                    {opt.label}
+                  </p>
+                </div>
+                {isSelected && <ArrowRight size={18} style={{ marginLeft: 'auto', color, flexShrink: 0 }} />}
+              </button>
+            );
+          })}
+        </div>
+
+        <p style={{ marginTop: '1.25rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+          Tip: usa las teclas 1-5 para responder, ← → para navegar
+        </p>
+      </div>
+
+      {/* Advertencia preguntas sin responder */}
+      {isLast && !allAnswered && (() => {
+        const unanswered = QUESTIONS.filter(q => answers[q.id] === undefined);
+        return (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#FEF3C7', border: '1px solid #FDE68A',
+            borderRadius: 'var(--radius)', padding: '0.85rem 1.25rem',
+            marginTop: '1.5rem', gap: '1rem', flexWrap: 'wrap'
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem', fontWeight: 700, color: '#92400E' }}>
+              <AlertTriangle size={15} /> {unanswered.length} pregunta{unanswered.length !== 1 ? 's' : ''} sin responder
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentQuestionIdx(QUESTIONS.findIndex(q => answers[q.id] === undefined))}
+              style={{ fontSize: '0.82rem', fontWeight: 700, color: '#92400E', background: '#FDE68A', border: 'none', borderRadius: '8px', padding: '0.3rem 0.85rem', cursor: 'pointer' }}
+            >
+              Ir a primera sin responder
+            </button>
           </div>
-        ))}
-      </div>
+        );
+      })()}
 
-      {/* Navigation */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5rem', gap: '1.5rem' }}>
+      {/* Navegación */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
         <button
           type="button"
-          onClick={() => setCurrentDimensionIdx(prev => prev - 1)}
-          disabled={currentDimensionIdx === 0}
+          onClick={goPrev}
+          disabled={currentQuestionIdx === 0}
           style={{
-            padding: '1rem 2rem', borderRadius: '14px', fontWeight: 700, cursor: 'pointer',
+            padding: '0.9rem 1.75rem', borderRadius: 'var(--radius)', fontWeight: 700,
             background: 'white', color: '#374151', border: '2px solid #E5E7EB',
-            display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: currentDimensionIdx === 0 ? 0.3 : 1
+            display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer',
+            opacity: currentQuestionIdx === 0 ? 0.3 : 1, transition: 'opacity 0.2s'
           }}
         >
-          <ChevronLeft /> Anterior
+          <ChevronLeft size={18} /> Anterior
         </button>
 
-        <button
-          type="button"
-          onClick={nextStep}
-          disabled={!isDimensionComplete}
-          style={{
-            padding: '1rem 3.5rem', borderRadius: '14px', fontWeight: 800,
-            cursor: isDimensionComplete ? 'pointer' : 'not-allowed',
-            background: isDimensionComplete ? '#1A2E1A' : '#D1D5DB',
-            color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem',
-            boxShadow: isDimensionComplete ? '0 8px 20px rgba(0,0,0,0.1)' : 'none',
-            border: 'none'
-          }}
-        >
-          {currentDimensionIdx === DIMENSIONS.length - 1 ? 'Finalizar Diagnóstico' : 'Siguiente Dimensión'} <ChevronRight />
-        </button>
+        {isLast ? (
+          <button
+            type="button"
+            className={allAnswered ? 'btn-hover' : ''}
+            onClick={handleSubmit}
+            disabled={!allAnswered}
+            style={{
+              padding: '0.9rem 2.5rem', borderRadius: 'var(--radius)', fontWeight: 800,
+              background: allAnswered ? '#1A2E1A' : '#D1D5DB', color: 'white',
+              border: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem',
+              cursor: allAnswered ? 'pointer' : 'not-allowed',
+              boxShadow: allAnswered ? '0 8px 20px rgba(0,0,0,0.15)' : 'none'
+            }}
+          >
+            Finalizar Diagnóstico <ChevronRight size={18} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={selectedValue === undefined}
+            style={{
+              padding: '0.9rem 2rem', borderRadius: 'var(--radius)', fontWeight: 700,
+              background: selectedValue !== undefined ? '#F0FDF4' : '#F9FAFB',
+              color: selectedValue !== undefined ? '#166534' : '#9CA3AF',
+              border: `2px solid ${selectedValue !== undefined ? '#86EFAC' : '#E5E7EB'}`,
+              display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer'
+            }}
+          >
+            Siguiente <ChevronRight size={18} />
+          </button>
+        )}
       </div>
     </div>
   );

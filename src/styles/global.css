@@ -15,12 +15,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Ocultar scrollbar manteniendo funcionalidad de scroll */
+html {
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 700;
   color: var(--color-text);
   line-height: 1.2;
 }
+
+h1 { font-size: var(--h1-size); }
+h2 { font-size: var(--h2-size); }
+h3 { font-size: var(--h3-size); }
 
 a {
   text-decoration: none;
@@ -54,11 +66,86 @@ button {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Dark mode desactivado - consistencia de marca */
-/* @media (prefers-color-scheme: dark) { .glass { ... } } */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #F3F4F6;
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 600px) {
+  .timeline-line { display: none; }
+}
+
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-hover {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.btn-hover:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 100px;
+  line-height: 1.4;
+}
+
+@media (min-width: 768px) {
+  .desktop-nav { display: flex !important; }
+  .mobile-toggle { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 2.5rem !important; }
+}
 
 @media print {
-  nav, footer, .no-print { display: none !important; }
-  body { background: white !important; }
-  .glass { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+  nav, footer, header, .no-print { display: none !important; }
+  body {
+    background: white !important;
+    color: #1A2E1A;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .glass {
+    box-shadow: none !important;
+    background: white !important;
+    backdrop-filter: none !important;
+    border: 1px solid #E5E7EB !important;
+  }
+  .container { max-width: 100% !important; }
+  h1 { font-size: 22pt !important; page-break-after: avoid; }
+  h2 { font-size: 15pt !important; page-break-after: avoid; }
+  h3 { font-size: 12pt !important; page-break-after: avoid; }
+  .recharts-wrapper { page-break-inside: avoid; }
+  @page { margin: 1.5cm 2cm; size: A4 portrait; }
 }
