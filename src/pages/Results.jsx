@@ -118,11 +118,7 @@ const Results = () => {
               : <><Share2 size={18} /> Compartir</>
             }
           </button>
-          {copied && (
-            <p style={{ width: '100%', textAlign: 'right', fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 600, marginTop: '-0.5rem' }}>
-              El enlace funciona en otros dispositivos si inició sesión con Google
-            </p>
-          )}
+
           <button
             type="button"
             className="btn-hover"
