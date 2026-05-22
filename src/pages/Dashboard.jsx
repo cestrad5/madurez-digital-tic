@@ -51,7 +51,7 @@ const Dashboard = () => {
     ]);
   }, []);
   
-  const colors = ['#4C9B2F', '#3182CE', '#805AD5', '#DD6B20', '#E53E3E', '#38B2AC'];
+  const SECTOR_BAR_COLORS = ['#3B82F6','#6366F1','#8B5CF6','#06B6D4','#0EA5E9','#64748B'];
 
   return (
     <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
@@ -100,7 +100,7 @@ const Dashboard = () => {
                 />
                 <Bar dataKey="score" radius={[0, 10, 10, 0]} barSize={30}>
                   {sectorAverages.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    <Cell key={`cell-${index}`} fill={SECTOR_BAR_COLORS[index % SECTOR_BAR_COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>
