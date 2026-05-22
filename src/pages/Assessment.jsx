@@ -5,7 +5,7 @@ import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
 import { saveAssessment, saveShare } from '../lib/db';
 import { REGIONS, COUNTRIES, STATES } from '../lib/locationData';
-import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map, Info } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 
 const SECTOR_ICONS = {
@@ -46,12 +46,6 @@ const Assessment = () => {
   const [answers, setAnswers] = useState({});
   const [advancing, setAdvancing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingSectorSize, setEditingSectorSize] = useState(() => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user') || 'null');
-      return !(user?.sector && user?.size);
-    } catch { return true; }
-  });
   const navigate = useNavigate();
   const submitTimerRef = useRef(null);
 
@@ -272,23 +266,19 @@ const Assessment = () => {
           </div>
         </div>
 
-        {/* --- UBICACIÓN GEOGRÁFICA --- oculta si ya está en el perfil */}
-        {savedProfile?.region && savedProfile?.country && savedProfile?.state ? (
-          <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}><MapPin size={18} /></div>
-              <div>
-                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ubicación guardada</p>
-                <p style={{ margin: 0, fontWeight: 700, color: '#1A2E1A', fontSize: '0.95rem' }}>
-                  {savedProfile.state} · {COUNTRIES[savedProfile.region]?.find(c => c.id === savedProfile.country)?.label || savedProfile.country}
-                </p>
-              </div>
-            </div>
-            <a href="/profile" style={{ background: 'white', border: '1px solid #FDE68A', borderRadius: 'var(--radius)', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.82rem', color: '#92400E', cursor: 'pointer', textDecoration: 'none' }}>
-              Cambiar
-            </a>
+        {/* Aviso datos precargados desde perfil */}
+        {((savedProfile?.region && savedProfile?.country && savedProfile?.state) || (savedProfile?.sector && savedProfile?.size)) && (
+          <div style={{ maxWidth: '560px', margin: '0 auto 2rem auto', display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: 'var(--radius)', padding: '0.875rem 1.25rem' }}>
+            <Info size={16} color="#0369A1" style={{ flexShrink: 0 }} />
+            <p style={{ margin: 0, fontSize: '0.88rem', color: '#0C4A6E', lineHeight: 1.5 }}>
+              Los datos de su empresa ya están configurados. Si necesita modificarlos,{' '}
+              <a href="/profile" style={{ color: '#0369A1', fontWeight: 700, textDecoration: 'none' }}>edítelos en Mi Empresa →</a>
+            </p>
           </div>
-        ) : (
+        )}
+
+        {/* --- UBICACIÓN GEOGRÁFICA --- oculta si ya está en el perfil */}
+        {savedProfile?.region && savedProfile?.country && savedProfile?.state ? null : (
           <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
               <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MapPin size={20} /></div>
@@ -345,27 +335,8 @@ const Assessment = () => {
           </div>
         )}
 
-        {/* Sub-sector + Tamaño — compacto si ya están guardados */}
-        {!editingSectorSize && companyInfo.sector && companyInfo.size ? (
-          <div style={{ maxWidth: '560px', margin: '0 auto', background: '#F0FDF4', border: '1.5px solid #BBF7D0', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}><Building2 size={18} /></div>
-              <div>
-                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Perfil de empresa guardado</p>
-                <p style={{ margin: 0, fontWeight: 700, color: '#1A2E1A', fontSize: '0.95rem' }}>
-                  {SECTORS.find(s => s.id === companyInfo.sector)?.label} · {SIZES.find(z => z.id === companyInfo.size)?.label}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setEditingSectorSize(true)}
-              style={{ background: 'white', border: '1px solid #BBF7D0', borderRadius: 'var(--radius)', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.82rem', color: '#166534', cursor: 'pointer' }}
-            >
-              Cambiar
-            </button>
-          </div>
-        ) : (
+        {/* Sub-sector + Tamaño — ocultos si ya están guardados */}
+        {!(savedProfile?.sector && savedProfile?.size) && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(350px, 100%), 1fr))', gap: '2.5rem' }}>
             {/* Sub-Sector */}
             <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
