@@ -36,6 +36,7 @@ const SCALE_COLORS = [
 const Assessment = () => {
   const [step, setStep] = useState('profile');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const savedProfile = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
   const [companyInfo, setCompanyInfo] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -220,115 +221,129 @@ const Assessment = () => {
           </span>
         </div>
 
-        {/* Nombre de empresa + Email (opcionales) */}
+        {/* Nombre de empresa + Email */}
         <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
             <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
               Nombre de su empresa <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional)</span>
             </label>
-            <input
-              type="text"
-              placeholder="Ej: TechSolutions S.A.S."
-              value={companyInfo.companyName}
-              onChange={e => setCompanyInfo(prev => ({ ...prev, companyName: e.target.value }))}
-              maxLength={80}
-              style={{ width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
-              onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
-              onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
-            />
+            {savedProfile?.companyName ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1.5px solid #E5E7EB', background: '#F9FAFB', fontSize: '1rem', color: '#374151' }}>
+                <span style={{ fontWeight: 600 }}>{companyInfo.companyName}</span>
+                <a href="/profile" style={{ fontSize: '0.78rem', color: '#4C9B2F', fontWeight: 700, textDecoration: 'none' }}>Editar en Mi Empresa</a>
+              </div>
+            ) : (
+              <input
+                type="text"
+                placeholder="Ej: TechSolutions S.A.S."
+                value={companyInfo.companyName}
+                onChange={e => setCompanyInfo(prev => ({ ...prev, companyName: e.target.value }))}
+                maxLength={80}
+                style={{ width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
+                onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+              />
+            )}
           </div>
           <div>
             <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
               Correo electrónico <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional · para recibir sus resultados)</span>
             </label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} />
-              <input
-                type="email"
-                placeholder="correo@empresa.com"
-                value={companyInfo.email}
-                onChange={e => setCompanyInfo(prev => ({ ...prev, email: e.target.value }))}
-                maxLength={120}
-                style={{ width: '100%', padding: '0.875rem 1.25rem 0.875rem 2.75rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
-                onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
-                onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
-              />
-            </div>
+            {savedProfile?.email ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1.5px solid #E5E7EB', background: '#F9FAFB', fontSize: '1rem', color: '#374151' }}>
+                <Mail size={16} color="#9CA3AF" />
+                <span style={{ fontWeight: 600 }}>{companyInfo.email}</span>
+              </div>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} />
+                <input
+                  type="email"
+                  placeholder="correo@empresa.com"
+                  value={companyInfo.email}
+                  onChange={e => setCompanyInfo(prev => ({ ...prev, email: e.target.value }))}
+                  maxLength={120}
+                  style={{ width: '100%', padding: '0.875rem 1.25rem 0.875rem 2.75rem', borderRadius: 'var(--radius)', border: '1px solid #E5E7EB', fontSize: '1rem', fontFamily: 'var(--font-body)', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
+                  onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* --- UBICACIÓN GEOGRÁFICA --- */}
-        <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-            <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MapPin size={20} /></div>
-            <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Ubicación Geográfica</h3>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Región — tarjetas clickables */}
-            <div>
-              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Región *</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                {[
-                  { id: 'norte_centro_america', label: 'Norteamérica y Centroamérica', Icon: Globe2 },
-                  { id: 'caribe',               label: 'Caribe',                       Icon: Waves  },
-                  { id: 'sudamerica',            label: 'Sudamérica',                   Icon: Map    },
-                ].map(({ id, label, Icon }) => {
-                  const selected = companyInfo.region === id;
-                  return (
-                    <div
-                      key={id}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, region: id, country: '', state: '' }))}
-                      onClick={() => setCompanyInfo(prev => ({ ...prev, region: id, country: '', state: '' }))}
-                      style={{
-                        padding: '1.1rem 0.75rem',
-                        borderRadius: 'var(--radius)',
-                        border: selected ? '2px solid #4C9B2F' : '1.5px solid #E5E7EB',
-                        background: selected ? '#F0FDF4' : 'white',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        transition: 'all 0.15s ease',
-                        boxShadow: selected ? '0 0 0 3px rgba(76,155,47,0.12)' : 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                        <Icon size={22} color={selected ? '#4C9B2F' : '#6B7280'} strokeWidth={1.75} />
-                      </div>
-                      <div style={{ fontSize: '0.72rem', fontWeight: selected ? 800 : 600, color: selected ? '#4C9B2F' : '#374151', lineHeight: 1.3 }}>{label}</div>
-                    </div>
-                  );
-                })}
+        {/* --- UBICACIÓN GEOGRÁFICA --- oculta si ya está en el perfil */}
+        {savedProfile?.region && savedProfile?.country && savedProfile?.state ? (
+          <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: '#FFFBEB', border: '1.5px solid #FDE68A', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}><MapPin size={18} /></div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: '#92400E', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ubicación guardada</p>
+                <p style={{ margin: 0, fontWeight: 700, color: '#1A2E1A', fontSize: '0.95rem' }}>
+                  {savedProfile.state} · {COUNTRIES[savedProfile.region]?.find(c => c.id === savedProfile.country)?.label || savedProfile.country}
+                </p>
               </div>
             </div>
-
-            {/* País */}
-            <div>
-              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>País *</label>
-              <CustomSelect
-                value={companyInfo.country}
-                onChange={val => setCompanyInfo(prev => ({ ...prev, country: val, state: '' }))}
-                disabled={!companyInfo.region}
-                placeholder="Seleccione un país"
-                disabledPlaceholder="— Seleccione primero la región —"
-                options={(companyInfo.region ? COUNTRIES[companyInfo.region] : []).map(c => ({ value: c.id, label: c.label }))}
-              />
+            <a href="/profile" style={{ background: 'white', border: '1px solid #FDE68A', borderRadius: 'var(--radius)', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.82rem', color: '#92400E', cursor: 'pointer', textDecoration: 'none' }}>
+              Cambiar
+            </a>
+          </div>
+        ) : (
+          <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+              <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MapPin size={20} /></div>
+              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Ubicación Geográfica</h3>
             </div>
-
-            {/* Departamento / Estado */}
-            <div>
-              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Departamento / Estado / Provincia *</label>
-              <CustomSelect
-                value={companyInfo.state}
-                onChange={val => setCompanyInfo(prev => ({ ...prev, state: val }))}
-                disabled={!companyInfo.country}
-                placeholder="Seleccione su departamento / estado"
-                disabledPlaceholder="— Seleccione primero el país —"
-                options={(companyInfo.country ? STATES[companyInfo.country] ?? [] : []).map(s => ({ value: s, label: s }))}
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Región *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
+                  {[
+                    { id: 'norte_centro_america', label: 'Norteamérica y Centroamérica', Icon: Globe2 },
+                    { id: 'caribe',               label: 'Caribe',                       Icon: Waves  },
+                    { id: 'sudamerica',            label: 'Sudamérica',                   Icon: Map    },
+                  ].map(({ id, label, Icon }) => {
+                    const selected = companyInfo.region === id;
+                    return (
+                      <div key={id} role="button" tabIndex={0}
+                        onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, region: id, country: '', state: '' }))}
+                        onClick={() => setCompanyInfo(prev => ({ ...prev, region: id, country: '', state: '' }))}
+                        style={{ padding: '1.1rem 0.75rem', borderRadius: 'var(--radius)', border: selected ? '2px solid #4C9B2F' : '1.5px solid #E5E7EB', background: selected ? '#F0FDF4' : 'white', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s ease', boxShadow: selected ? '0 0 0 3px rgba(76,155,47,0.12)' : 'none' }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                          <Icon size={22} color={selected ? '#4C9B2F' : '#6B7280'} strokeWidth={1.75} />
+                        </div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: selected ? 800 : 600, color: selected ? '#4C9B2F' : '#374151', lineHeight: 1.3 }}>{label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>País *</label>
+                <CustomSelect
+                  value={companyInfo.country}
+                  onChange={val => setCompanyInfo(prev => ({ ...prev, country: val, state: '' }))}
+                  disabled={!companyInfo.region}
+                  placeholder="Seleccione un país"
+                  disabledPlaceholder="— Seleccione primero la región —"
+                  options={(companyInfo.region ? COUNTRIES[companyInfo.region] : []).map(c => ({ value: c.id, label: c.label }))}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Departamento / Estado / Provincia *</label>
+                <CustomSelect
+                  value={companyInfo.state}
+                  onChange={val => setCompanyInfo(prev => ({ ...prev, state: val }))}
+                  disabled={!companyInfo.country}
+                  placeholder="Seleccione su departamento / estado"
+                  disabledPlaceholder="— Seleccione primero el país —"
+                  options={(companyInfo.country ? STATES[companyInfo.country] ?? [] : []).map(s => ({ value: s, label: s }))}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Sub-sector + Tamaño — compacto si ya están guardados */}
         {!editingSectorSize && companyInfo.sector && companyInfo.size ? (

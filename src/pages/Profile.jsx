@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MapPin, Globe2, Waves, Map, Save, Check, ArrowLeft, AlertCircle, Users, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building } from 'lucide-react';
+import { Building2, MapPin, Globe2, Waves, Map, Save, Check, ArrowLeft, AlertCircle, Users, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Trash2 } from 'lucide-react';
 import { COUNTRIES, STATES } from '../lib/locationData';
 import { SECTORS, SIZES } from '../lib/benchmark';
+import { deleteUser } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 import CustomSelect from '../components/CustomSelect';
 
 const SECTOR_ICONS = {
@@ -38,6 +40,8 @@ const Profile = () => {
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState({});
   const [showBanner, setShowBanner] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const bannerRef = useRef(null);
 
   const [form, setForm] = useState(() => {
@@ -61,6 +65,30 @@ const Profile = () => {
   const setRegion = (id) => {
     setForm(p => ({ ...p, region: id, country: '', state: '' }));
     clearError('region');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('¿Está seguro de que desea eliminar su cuenta? Esta acción no se puede deshacer y perderá todos sus diagnósticos.')) return;
+    setDeletingAccount(true);
+    setDeleteError('');
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (!user?.isDemo && auth.currentUser) {
+        await deleteUser(auth.currentUser);
+      }
+      // Limpiar localStorage
+      Object.keys(localStorage).forEach(k => {
+        if (k === 'user' || k.startsWith('assessment_')) localStorage.removeItem(k);
+      });
+      navigate('/');
+    } catch (e) {
+      setDeletingAccount(false);
+      if (e.code === 'auth/requires-recent-login') {
+        setDeleteError('Por seguridad, cierre sesión, vuelva a iniciar sesión y luego elimine la cuenta.');
+      } else {
+        setDeleteError('No se pudo eliminar la cuenta. Intente nuevamente.');
+      }
+    }
   };
 
   const validate = () => {
@@ -319,6 +347,27 @@ const Profile = () => {
       >
         {saved ? <><Check size={18} /> Cambios guardados</> : <><Save size={18} /> Guardar cambios</>}
       </button>
+
+      {/* Zona de peligro — Eliminar cuenta */}
+      <div style={{ marginTop: '3rem', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1.5px solid #FECACA', background: '#FFF5F5' }}>
+        <p style={{ margin: '0 0 0.25rem', fontWeight: 700, color: '#991B1B', fontSize: '0.95rem' }}>Zona de peligro</p>
+        <p style={{ margin: '0 0 1rem', color: '#6B7280', fontSize: '0.85rem' }}>
+          Eliminar la cuenta borrará su acceso y todos los diagnósticos locales. Esta acción no se puede deshacer.
+        </p>
+        {deleteError && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#DC2626', fontSize: '0.85rem', fontWeight: 600 }}>
+            <AlertCircle size={15} /> {deleteError}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleDeleteAccount}
+          disabled={deletingAccount}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1.5px solid #FECACA', borderRadius: 'var(--radius)', padding: '0.6rem 1.25rem', fontWeight: 700, fontSize: '0.875rem', color: '#DC2626', cursor: deletingAccount ? 'not-allowed' : 'pointer', opacity: deletingAccount ? 0.6 : 1 }}
+        >
+          <Trash2 size={15} /> {deletingAccount ? 'Eliminando...' : 'Eliminar mi cuenta'}
+        </button>
+      </div>
     </div>
   );
 };
