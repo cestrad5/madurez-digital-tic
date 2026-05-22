@@ -115,7 +115,6 @@ const Results = () => {
             style={{
               padding: '0.8rem 1.5rem', borderRadius: 'var(--radius)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontWeight: 700,
-              minWidth: '160px',
               background: copied ? '#F0FDF4' : 'white',
               color: copied ? '#166534' : '#4B5563',
               cursor: 'pointer',
@@ -124,7 +123,7 @@ const Results = () => {
             }}
           >
             {copied
-              ? <><Check size={18} /> ¡Enlace copiado!</>
+              ? <><Check size={18} /> ¡Copiado!</>
               : <><Share2 size={18} /> Compartir</>
             }
           </button>
