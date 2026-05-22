@@ -5,9 +5,12 @@ import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
 import { saveAssessment, saveShare } from '../lib/db';
 import { REGIONS, COUNTRIES, STATES } from '../lib/locationData';
-import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map, Info } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map, Info, CalendarClock, BarChart2, Route } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
 import ConfirmModal from '../components/ConfirmModal';
+import { readFromLocalStorage } from '../lib/utils';
+
+const COOLDOWN_DAYS = 90;
 
 const SECTOR_ICONS = {
   software:        <Code2 size={18} />,
@@ -48,11 +51,13 @@ const Assessment = () => {
   const [advancing, setAdvancing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quotaModal, setQuotaModal] = useState(false);
+  const [cooldown, setCooldown] = useState(null); // { lastAssessment, daysElapsed, daysRemaining }
   const navigate = useNavigate();
   const submitTimerRef = useRef(null);
 
-  // Restore draft on mount
+  // Restore draft on mount + check 90-day cooldown
   useEffect(() => {
+    // Draft en progreso tiene prioridad sobre el cooldown
     try {
       const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
       if (draft?.answers && draft?.companyInfo?.sector) {
@@ -60,8 +65,26 @@ const Assessment = () => {
         setAnswers(draft.answers);
         setCurrentQuestionIdx(draft.questionIdx ?? 0);
         setStep('questions');
+        return;
       }
     } catch { /* draft corrupto, ignorar */ }
+
+    // Verificar cooldown de 90 días
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const userId = user?.uid || (user?.isDemo ? 'demo' : null);
+      const all = readFromLocalStorage(userId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (all.length > 0) {
+        const last = all[0];
+        const daysElapsed = Math.floor((Date.now() - new Date(last.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+        const daysRemaining = COOLDOWN_DAYS - daysElapsed;
+        if (daysRemaining > 0) {
+          setCooldown({ lastAssessment: last, daysElapsed, daysRemaining });
+          setStep('cooldown');
+        }
+      }
+    } catch { /* ignorar */ }
+
     return () => clearTimeout(submitTimerRef.current);
   }, []);
 
@@ -202,6 +225,68 @@ const Assessment = () => {
     sessionStorage.removeItem(DRAFT_KEY);
     submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 1800);
   };
+
+  // ─── COOLDOWN 90 DÍAS ────────────────────────────────────────────────────
+  if (step === 'cooldown' && cooldown) {
+    const pct = Math.min(100, Math.round((cooldown.daysElapsed / COOLDOWN_DAYS) * 100));
+    const last = cooldown.lastAssessment;
+    const dateLabel = new Date(last.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    return (
+      <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem', maxWidth: '640px' }}>
+        <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 8px 32px rgba(0,0,0,0.06)', padding: '3rem 2.5rem', textAlign: 'center' }}>
+
+          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '72px', height: '72px', borderRadius: '20px', background: '#EFF6FF', color: '#3B82F6', marginBottom: '1.75rem' }}>
+            <CalendarClock size={34} />
+          </div>
+
+          <h2 style={{ fontSize: '1.6rem', color: '#1A2E1A', marginBottom: '0.75rem' }}>
+            Su ciclo de diagnóstico está activo
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '0.97rem', maxWidth: '480px', margin: '0 auto 2rem', lineHeight: 1.65 }}>
+            Para obtener resultados significativos, el nuevo diagnóstico debe realizarse una vez completado el plan de acción de <strong>90 días</strong>. Le quedan <strong>{cooldown.daysRemaining} días</strong> para el próximo ciclo.
+          </p>
+
+          {/* Barra de progreso de los 90 días */}
+          <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 700, color: '#6B7280' }}>
+            <span>Inicio: {dateLabel}</span>
+            <span>{cooldown.daysElapsed} / {COOLDOWN_DAYS} días</span>
+          </div>
+          <div style={{ height: '10px', background: '#F3F4F6', borderRadius: '100px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+            <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #3B82F6, #6366F1)', borderRadius: '100px', transition: 'width 0.6s ease' }} />
+          </div>
+          <p style={{ fontSize: '0.82rem', color: '#9CA3AF', marginBottom: '2.5rem' }}>
+            {cooldown.daysRemaining} días restantes para el próximo diagnóstico
+          </p>
+
+          {/* Acciones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn-hover"
+              onClick={() => navigate(`/roadmap/${last.id}`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', background: '#1A2E1A', color: 'white', border: 'none', borderRadius: 'var(--radius)', padding: '0.9rem 2rem', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer' }}
+            >
+              <Route size={17} /> Ver mi Plan de Acción
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/results/${last.id}`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', background: 'white', color: '#374151', border: '1.5px solid #E5E7EB', borderRadius: 'var(--radius)', padding: '0.9rem 2rem', fontWeight: 700, fontSize: '0.95rem', cursor: 'pointer' }}
+            >
+              <BarChart2 size={17} /> Ver resultados actuales
+            </button>
+            <button
+              type="button"
+              onClick={() => { setCooldown(null); setStep('profile'); }}
+              style={{ fontSize: '0.82rem', color: '#9CA3AF', background: 'none', border: 'none', cursor: 'pointer', marginTop: '0.25rem', textDecoration: 'underline' }}
+            >
+              Continuar de todos modos
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ─── PERFIL ───────────────────────────────────────────────────────────────
   if (step === 'profile') {
