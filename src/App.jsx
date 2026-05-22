@@ -10,7 +10,8 @@ const Results    = lazy(() => import('./pages/Results'));
 const Roadmap    = lazy(() => import('./pages/Roadmap'));
 const History    = lazy(() => import('./pages/History'));
 const Dashboard  = lazy(() => import('./pages/Dashboard'));
-const Profile    = lazy(() => import('./pages/Profile'));
+const Profile      = lazy(() => import('./pages/Profile'));
+const ShareResults = lazy(() => import('./pages/ShareResults'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -65,6 +66,7 @@ function App() {
               <Route path="/history" element={<ProtectedRoute element={<History />} />} />
               <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
               <Route path="/profile"  element={<ProtectedRoute element={<Profile />} />} />
+              <Route path="/share/:token" element={<ShareResults />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

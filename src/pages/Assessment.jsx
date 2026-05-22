@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { QUESTIONS, DIMENSIONS } from '../lib/questions';
 import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
-import { saveAssessment } from '../lib/db';
+import { saveAssessment, saveShare } from '../lib/db';
 import { REGIONS, COUNTRIES, STATES } from '../lib/locationData';
 import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
@@ -134,6 +134,7 @@ const Assessment = () => {
     setIsSubmitting(true);
     const results = calculateScoring(answers);
     const assessmentId = Date.now().toString();
+    const shareToken = crypto.randomUUID();
     const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
     const userId = currentUser?.uid || (currentUser?.isDemo ? 'demo' : null);
     if (currentUser) {
@@ -147,7 +148,7 @@ const Assessment = () => {
         window.dispatchEvent(new Event('user-changed'));
       } catch { /* cuota */ }
     }
-    const assessmentData = { id: assessmentId, companyInfo, answers, results, createdAt: new Date().toISOString(), userId };
+    const assessmentData = { id: assessmentId, shareToken, companyInfo, answers, results, createdAt: new Date().toISOString(), userId };
 
     try {
       localStorage.setItem(`assessment_${assessmentId}`, JSON.stringify(assessmentData));
@@ -165,6 +166,7 @@ const Assessment = () => {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       if (user?.uid && !user?.isDemo) {
         await saveAssessment(user.uid, assessmentData);
+        await saveShare(shareToken, assessmentData);
       }
     } catch { /* fallo de red: los datos ya están en localStorage */ }
 
@@ -180,7 +182,8 @@ const Assessment = () => {
       puntajeTotal: results.total,
       nivel:        results.levelInfo.name,
       dimensiones:  { D1: results.D1, D2: results.D2, D3: results.D3, D4: results.D4, D5: results.D5 },
-      fecha:        new Date().toISOString()
+      fecha:        new Date().toISOString(),
+      shareToken
     });
     fetch('https://mairidhmon.app.n8n.cloud/webhook/diagnostico', {
       method: 'POST',
