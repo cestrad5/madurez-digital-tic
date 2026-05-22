@@ -76,7 +76,7 @@ const Results = () => {
     <div className="container" style={{ paddingTop: '3rem', paddingBottom: '4rem' }}>
       <button
         type="button"
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/history')}
         className="no-print"
         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.875rem', marginBottom: '1.5rem', padding: 0 }}
       >
