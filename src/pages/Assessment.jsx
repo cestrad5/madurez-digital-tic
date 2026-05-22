@@ -239,7 +239,14 @@ const Assessment = () => {
               />
             )}
           </div>
-          {!savedProfile?.email && (
+          {savedProfile?.email ? (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+              <Mail size={15} color="#4C9B2F" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
+              <p style={{ margin: 0, fontSize: '0.88rem', color: '#166534', lineHeight: 1.55 }}>
+                El informe de diagnóstico y el plan de acción serán enviados a <strong>{savedProfile.email}</strong>, la dirección registrada en su cuenta.
+              </p>
+            </div>
+          ) : (
             <div>
               <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
                 Correo electrónico <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional · para recibir sus resultados)</span>
