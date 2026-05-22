@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { History as HistoryIcon, ArrowUpRight, Calendar, BarChart2, Building2, Trash2, RefreshCw, Plus, TrendingUp } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 import { SECTORS, SIZES } from '../lib/benchmark';
 import { getScoreColor, readFromLocalStorage } from '../lib/utils';
 import { getAssessments } from '../lib/db';
@@ -17,6 +18,7 @@ const History = () => {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [currentUserEmail, setCurrentUserEmail] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
   const navigate = useNavigate();
 
   const load = async () => {
@@ -47,9 +49,13 @@ const History = () => {
   useEffect(() => { load(); }, []);
 
   const handleDelete = (id) => {
-    if (!window.confirm('¿Eliminar este diagnóstico? Esta acción no se puede deshacer.')) return;
-    localStorage.removeItem(`assessment_${id}`);
-    setAssessments(prev => prev.filter(a => a.id !== id));
+    setDeleteModal(id);
+  };
+
+  const confirmDelete = () => {
+    localStorage.removeItem(`assessment_${deleteModal}`);
+    setAssessments(prev => prev.filter(a => a.id !== deleteModal));
+    setDeleteModal(null);
   };
 
   return (
@@ -258,6 +264,16 @@ const History = () => {
           })}
         </div>
       )}
+      <ConfirmModal
+        open={!!deleteModal}
+        variant="danger"
+        title="Eliminar diagnóstico"
+        message="Esta acción eliminará el diagnóstico de forma permanente. No podrá recuperarlo una vez eliminado."
+        confirmLabel="Sí, eliminar"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal(null)}
+      />
     </div>
   );
 };

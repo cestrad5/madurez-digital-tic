@@ -7,6 +7,7 @@ import { saveAssessment, saveShare } from '../lib/db';
 import { REGIONS, COUNTRIES, STATES } from '../lib/locationData';
 import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map, Info } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
+import ConfirmModal from '../components/ConfirmModal';
 
 const SECTOR_ICONS = {
   software:        <Code2 size={18} />,
@@ -46,6 +47,7 @@ const Assessment = () => {
   const [answers, setAnswers] = useState({});
   const [advancing, setAdvancing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quotaModal, setQuotaModal] = useState(false);
   const navigate = useNavigate();
   const submitTimerRef = useRef(null);
 
@@ -158,7 +160,7 @@ const Assessment = () => {
     } catch (e) {
       if (e instanceof DOMException && e.name === 'QuotaExceededError') {
         setIsSubmitting(false);
-        alert('No hay espacio en el navegador. Elimine diagnósticos anteriores desde el Historial.');
+        setQuotaModal(true);
         return;
       }
       throw e;
@@ -622,6 +624,15 @@ const Assessment = () => {
           </button>
         )}
       </div>
+
+      <ConfirmModal
+        open={quotaModal}
+        variant="warning"
+        title="Almacenamiento insuficiente"
+        message="No hay espacio disponible en el navegador para guardar este diagnóstico. Elimine registros anteriores desde el Historial e inténtelo nuevamente."
+        confirmLabel="Ir al Historial"
+        onConfirm={() => { setQuotaModal(false); navigate('/history'); }}
+      />
     </div>
   );
 };

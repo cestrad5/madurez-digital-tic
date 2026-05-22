@@ -6,6 +6,7 @@ import { SECTORS, SIZES } from '../lib/benchmark';
 import { deleteUser } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import CustomSelect from '../components/CustomSelect';
+import ConfirmModal from '../components/ConfirmModal';
 
 const SECTOR_ICONS = {
   software:        <Code2 size={18} />,
@@ -42,6 +43,7 @@ const Profile = () => {
   const [showBanner, setShowBanner] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const bannerRef = useRef(null);
 
   const [form, setForm] = useState(() => {
@@ -68,7 +70,6 @@ const Profile = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm('¿Está seguro de que desea eliminar su cuenta? Esta acción no se puede deshacer y perderá todos sus diagnósticos.')) return;
     setDeletingAccount(true);
     setDeleteError('');
     try {
@@ -361,13 +362,25 @@ const Profile = () => {
         )}
         <button
           type="button"
-          onClick={handleDeleteAccount}
+          onClick={() => setShowDeleteModal(true)}
           disabled={deletingAccount}
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'white', border: '1.5px solid #FECACA', borderRadius: 'var(--radius)', padding: '0.6rem 1.25rem', fontWeight: 700, fontSize: '0.875rem', color: '#DC2626', cursor: deletingAccount ? 'not-allowed' : 'pointer', opacity: deletingAccount ? 0.6 : 1 }}
         >
           <Trash2 size={15} /> {deletingAccount ? 'Eliminando...' : 'Eliminar mi cuenta'}
         </button>
       </div>
+
+      <ConfirmModal
+        open={showDeleteModal}
+        variant="danger"
+        title="Eliminar cuenta"
+        message="Esta acción eliminará permanentemente su cuenta y todos sus diagnósticos asociados. No podrá recuperar esta información."
+        confirmLabel={deletingAccount ? 'Eliminando...' : 'Sí, eliminar mi cuenta'}
+        cancelLabel="Cancelar"
+        loading={deletingAccount}
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </div>
   );
 };
