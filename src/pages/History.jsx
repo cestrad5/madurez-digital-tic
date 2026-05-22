@@ -16,6 +16,7 @@ const History = () => {
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState(null);
   const navigate = useNavigate();
 
   const load = async () => {
@@ -23,6 +24,7 @@ const History = () => {
     const user = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
     const userId = user?.uid || (user?.isDemo ? 'demo' : null);
     setCurrentUserId(userId);
+    setCurrentUserEmail(user?.email || null);
     const local = readFromLocalStorage(userId);
     setAssessments(local.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
 
@@ -237,7 +239,9 @@ const History = () => {
                   >
                     Hoja de Ruta
                   </button>
-                  {(!item.userId || item.userId === currentUserId) && (
+                  {(item.userId === currentUserId ||
+                    (!item.userId && currentUserEmail && item.companyInfo?.email === currentUserEmail)
+                  ) && (
                     <button
                       type="button"
                       className="btn-hover"
