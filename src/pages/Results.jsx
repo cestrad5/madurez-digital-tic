@@ -282,58 +282,87 @@ const Results = () => {
 
       {/* Dimensional Breakdown */}
       <h2 style={{ marginBottom: '2rem', fontSize: '1.8rem', fontWeight: 800 }}>Análisis Detallado por Área</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '5rem' }}>
         {[
-          { id: 'D1', label: 'Estrategia', val: results.D1, bm: benchmark.D1, icon: <Award size={18} /> },
-          { id: 'D2', label: 'Tecnología', val: results.D2, bm: benchmark.D2, icon: <TrendingUp size={18} /> },
-          { id: 'D3', label: 'Talento', val: results.D3, bm: benchmark.D3, icon: <Users size={18} /> },
-          { id: 'D4', label: 'Datos', val: results.D4, bm: benchmark.D4, icon: <Target size={18} /> },
-          { id: 'D5', label: 'Cliente', val: results.D5, bm: benchmark.D5, icon: <Star size={18} /> },
+          { id: 'D1', label: 'Estrategia', val: results.D1, bm: benchmark.D1, icon: <Award size={20} /> },
+          { id: 'D2', label: 'Tecnología', val: results.D2, bm: benchmark.D2, icon: <TrendingUp size={20} /> },
+          { id: 'D3', label: 'Talento',    val: results.D3, bm: benchmark.D3, icon: <Users size={20} /> },
+          { id: 'D4', label: 'Datos',      val: results.D4, bm: benchmark.D4, icon: <Target size={20} /> },
+          { id: 'D5', label: 'Cliente',    val: results.D5, bm: benchmark.D5, icon: <Star size={20} /> },
         ].map(dim => {
           const color = getScoreColor(dim.val);
           const levelLabel = getScoreLevelLabel(dim.val);
           const vsMarket = dim.val - dim.bm;
+          const isAbove = vsMarket >= 0;
+
+          // Mini arco SVG
+          const R = 28, cx = 34, cy = 34, stroke = 6;
+          const circ = 2 * Math.PI * R;
+          const filled = circ * (dim.val / 100);
+          const gap = circ - filled;
+
           return (
             <div key={dim.id} className="card-hover" style={{
               background: 'white',
-              padding: '1.75rem',
               borderRadius: 'var(--radius-lg)',
-              border: '1px solid #e5e7eb',
-              borderLeft: `4px solid ${color}`,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+              overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1.1rem'
             }}>
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {/* Acento superior */}
+              <div style={{ height: '5px', background: color }} />
+
+              <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                {/* Encabezado: ícono + nombre */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <div style={{ background: `${color}18`, color, padding: '0.4rem', borderRadius: 'var(--radius)', display: 'flex', alignItems: 'center' }}>
+                  <div style={{ background: `${color}18`, color, padding: '0.45rem', borderRadius: '10px', display: 'flex' }}>
                     {dim.icon}
                   </div>
-                  <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#374151' }}>{dim.label}</span>
+                  <span style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1A2E1A' }}>{dim.label}</span>
                 </div>
-                <span className="badge" style={{ background: `${color}15`, color, whiteSpace: 'nowrap' }}>
-                  {levelLabel}
-                </span>
-              </div>
 
-              {/* Puntaje */}
-              <div style={{ lineHeight: 1 }}>
-                <span style={{ fontSize: '2.6rem', fontWeight: 900, color }}>{dim.val}</span>
-                <span style={{ fontSize: '1rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>/100</span>
-              </div>
-
-              {/* Barra de progreso */}
-              <div>
-                <div style={{ background: '#F3F4F6', height: '8px', borderRadius: '4px', position: 'relative' }}>
-                  <div style={{ background: color, width: `${dim.val}%`, height: '100%', borderRadius: '4px', transition: 'width 1s ease-out' }} />
-                  <div style={{ position: 'absolute', top: '-3px', left: `${dim.bm}%`, width: '3px', height: '14px', background: '#9CA3AF', borderRadius: '2px', transform: 'translateX(-50%)' }} />
+                {/* Puntaje + arco */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ lineHeight: 1 }}>
+                    <span style={{ fontSize: '3rem', fontWeight: 900, color, lineHeight: 1 }}>{dim.val}</span>
+                    <span style={{ fontSize: '0.9rem', color: '#9CA3AF', fontWeight: 600 }}>/100</span>
+                    <div style={{ marginTop: '0.4rem' }}>
+                      <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, padding: '0.2rem 0.65rem', borderRadius: '100px', background: `${color}15`, color }}>
+                        {levelLabel}
+                      </span>
+                    </div>
+                  </div>
+                  <svg width={cx * 2} height={cy * 2} style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx={cx} cy={cy} r={R} fill="none" stroke="#F3F4F6" strokeWidth={stroke} />
+                    <circle cx={cx} cy={cy} r={R} fill="none" stroke={color} strokeWidth={stroke}
+                      strokeDasharray={`${filled} ${gap}`} strokeLinecap="round" />
+                    {/* Marcador benchmark */}
+                    {(() => {
+                      const angle = (dim.bm / 100) * 2 * Math.PI - Math.PI / 2;
+                      const mx = cx + R * Math.cos(angle);
+                      const my = cy + R * Math.sin(angle);
+                      return <circle cx={mx} cy={my} r={4} fill="#9CA3AF" />;
+                    })()}
+                  </svg>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Benchmark: {dim.bm}%</span>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: vsMarket >= 0 ? '#4C9B2F' : '#E53E3E' }}>
-                    {vsMarket >= 0 ? `+${vsMarket}` : vsMarket} pts vs mercado
+
+                {/* Benchmark row */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  paddingTop: '0.75rem', borderTop: '1px solid #F3F4F6',
+                }}>
+                  <span style={{ fontSize: '0.75rem', color: '#9CA3AF', fontWeight: 600 }}>
+                    Mercado: <strong style={{ color: '#6B7280' }}>{dim.bm}</strong>
+                  </span>
+                  <span style={{
+                    fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.65rem',
+                    borderRadius: '100px',
+                    background: isAbove ? '#DCFCE7' : '#FEE2E2',
+                    color: isAbove ? '#166534' : '#991B1B',
+                  }}>
+                    {isAbove ? `+${vsMarket}` : vsMarket} pts
                   </span>
                 </div>
               </div>
