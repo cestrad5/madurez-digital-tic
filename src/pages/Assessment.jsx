@@ -186,6 +186,7 @@ const Assessment = () => {
         setQuotaModal(true);
         return;
       }
+      setIsSubmitting(false);
       throw e;
     }
 
@@ -219,10 +220,10 @@ const Assessment = () => {
       body: n8nPayload,
       keepalive: true
     })
-      .then(r => console.log('[n8n] fetch status:', r.status, r.ok))
-      .catch(e => console.error('[n8n] fetch error:', e.message));
+      .catch(() => {});
 
     sessionStorage.removeItem(DRAFT_KEY);
+    clearTimeout(submitTimerRef.current);
     submitTimerRef.current = setTimeout(() => navigate(`/results/${assessmentId}`), 1800);
   };
 
