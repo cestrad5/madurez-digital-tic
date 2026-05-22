@@ -39,12 +39,18 @@ const Assessment = () => {
   const [companyInfo, setCompanyInfo] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      return { sector: '', size: '', companyName: user?.companyName || '', email: user?.email || '', region: user?.region || '', country: user?.country || '', state: user?.state || '' };
+      return { sector: user?.sector || '', size: user?.size || '', companyName: user?.companyName || '', email: user?.email || '', region: user?.region || '', country: user?.country || '', state: user?.state || '' };
     } catch { return { sector: '', size: '', companyName: '', email: '', region: '', country: '', state: '' }; }
   });
   const [answers, setAnswers] = useState({});
   const [advancing, setAdvancing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingSectorSize, setEditingSectorSize] = useState(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      return !(user?.sector && user?.size);
+    } catch { return true; }
+  });
   const navigate = useNavigate();
   const submitTimerRef = useRef(null);
 
@@ -141,6 +147,8 @@ const Assessment = () => {
       try {
         const updates = {};
         if (companyInfo.companyName) updates.companyName = companyInfo.companyName;
+        if (companyInfo.sector)      updates.sector      = companyInfo.sector;
+        if (companyInfo.size)        updates.size        = companyInfo.size;
         if (companyInfo.region)      updates.region      = companyInfo.region;
         if (companyInfo.country)     updates.country     = companyInfo.country;
         if (companyInfo.state)       updates.state       = companyInfo.state;
@@ -322,67 +330,89 @@ const Assessment = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(350px, 100%), 1fr))', gap: '2.5rem' }}>
-          {/* Sub-Sector */}
-          <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-              <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={20} /></div>
-              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Sub-sector TIC</h3>
+        {/* Sub-sector + Tamaño — compacto si ya están guardados */}
+        {!editingSectorSize && companyInfo.sector && companyInfo.size ? (
+          <div style={{ maxWidth: '560px', margin: '0 auto', background: '#F0FDF4', border: '1.5px solid #BBF7D0', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.5rem', borderRadius: '10px', display: 'flex' }}><Building2 size={18} /></div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Perfil de empresa guardado</p>
+                <p style={{ margin: 0, fontWeight: 700, color: '#1A2E1A', fontSize: '0.95rem' }}>
+                  {SECTORS.find(s => s.id === companyInfo.sector)?.label} · {SIZES.find(z => z.id === companyInfo.size)?.label}
+                </p>
+              </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {SECTORS.map(s => (
-                <div
-                  key={s.id}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, sector: s.id }))}
-                  onClick={() => setCompanyInfo(prev => ({ ...prev, sector: s.id }))}
-                  className="card-hover"
-                  style={{
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius)',
-                    border: companyInfo.sector === s.id ? '2px solid #4C9B2F' : '1px solid #E5E7EB',
-                    background: companyInfo.sector === s.id ? '#F0FDF4' : 'white',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem',
-                    fontWeight: companyInfo.sector === s.id ? 700 : 500,
-                    color: companyInfo.sector === s.id ? '#166534' : '#374151'
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center' }}>{SECTOR_ICONS[s.id]}</span> {s.label}
-                </div>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setEditingSectorSize(true)}
+              style={{ background: 'white', border: '1px solid #BBF7D0', borderRadius: 'var(--radius)', padding: '0.5rem 1rem', fontWeight: 700, fontSize: '0.82rem', color: '#166534', cursor: 'pointer' }}
+            >
+              Cambiar
+            </button>
           </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(350px, 100%), 1fr))', gap: '2.5rem' }}>
+            {/* Sub-Sector */}
+            <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+                <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={20} /></div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Sub-sector TIC</h3>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {SECTORS.map(s => (
+                  <div
+                    key={s.id}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, sector: s.id }))}
+                    onClick={() => setCompanyInfo(prev => ({ ...prev, sector: s.id }))}
+                    className="card-hover"
+                    style={{
+                      padding: '1rem 1.25rem', borderRadius: 'var(--radius)',
+                      border: companyInfo.sector === s.id ? '2px solid #4C9B2F' : '1px solid #E5E7EB',
+                      background: companyInfo.sector === s.id ? '#F0FDF4' : 'white',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem',
+                      fontWeight: companyInfo.sector === s.id ? 700 : 500,
+                      color: companyInfo.sector === s.id ? '#166534' : '#374151'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>{SECTOR_ICONS[s.id]}</span> {s.label}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          {/* Tamaño */}
-          <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-              <div style={{ background: '#EFF6FF', color: '#3182CE', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={20} /></div>
-              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Tamaño de Empresa</h3>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {SIZES.map(z => (
-                <div
-                  key={z.id}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, size: z.id }))}
-                  onClick={() => setCompanyInfo(prev => ({ ...prev, size: z.id }))}
-                  className="card-hover"
-                  style={{
-                    padding: '1rem 1.25rem', borderRadius: 'var(--radius)',
-                    border: companyInfo.size === z.id ? '2px solid #3182CE' : '1px solid #E5E7EB',
-                    background: companyInfo.size === z.id ? '#EFF6FF' : 'white',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem',
-                    fontWeight: companyInfo.size === z.id ? 700 : 500,
-                    color: companyInfo.size === z.id ? '#1E40AF' : '#374151'
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center' }}>{SIZE_ICONS[z.id]}</span> {z.label}
-                </div>
-              ))}
+            {/* Tamaño */}
+            <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
+                <div style={{ background: '#EFF6FF', color: '#3182CE', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={20} /></div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Tamaño de Empresa</h3>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {SIZES.map(z => (
+                  <div
+                    key={z.id}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, size: z.id }))}
+                    onClick={() => setCompanyInfo(prev => ({ ...prev, size: z.id }))}
+                    className="card-hover"
+                    style={{
+                      padding: '1rem 1.25rem', borderRadius: 'var(--radius)',
+                      border: companyInfo.size === z.id ? '2px solid #3182CE' : '1px solid #E5E7EB',
+                      background: companyInfo.size === z.id ? '#EFF6FF' : 'white',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem',
+                      fontWeight: companyInfo.size === z.id ? 700 : 500,
+                      color: companyInfo.size === z.id ? '#1E40AF' : '#374151'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center' }}>{SIZE_ICONS[z.id]}</span> {z.label}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: '4rem' }}>
           <button

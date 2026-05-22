@@ -1,8 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, MapPin, Globe2, Waves, Map, Save, Check, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Building2, MapPin, Globe2, Waves, Map, Save, Check, ArrowLeft, AlertCircle, Users, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building } from 'lucide-react';
 import { COUNTRIES, STATES } from '../lib/locationData';
+import { SECTORS, SIZES } from '../lib/benchmark';
 import CustomSelect from '../components/CustomSelect';
+
+const SECTOR_ICONS = {
+  software:        <Code2 size={18} />,
+  servicios_ti:    <Shield size={18} />,
+  infraestructura: <Server size={18} />,
+  edtech:          <GraduationCap size={18} />,
+  fintech:         <CreditCard size={18} />,
+  telecom:         <Radio size={18} />,
+};
+const SIZE_ICONS = {
+  micro:   <User size={18} />,
+  pequena: <Users size={18} />,
+  mediana: <Building size={18} />,
+  grande:  <Building2 size={18} />,
+};
 
 const REGIONS_LIST = [
   { id: 'norte_centro_america', label: 'Norteamérica y Centroamérica', Icon: Globe2 },
@@ -29,12 +45,14 @@ const Profile = () => {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
       return {
         companyName: user?.companyName || '',
+        sector:      user?.sector      || '',
+        size:        user?.size        || '',
         region:      user?.region      || '',
         country:     user?.country     || '',
         state:       user?.state       || '',
       };
     } catch {
-      return { companyName: '', region: '', country: '', state: '' };
+      return { companyName: '', sector: '', size: '', region: '', country: '', state: '' };
     }
   });
 
@@ -66,6 +84,8 @@ const Profile = () => {
       if (!user) return;
       const updates = { region: form.region, country: form.country, state: form.state };
       if (form.companyName) updates.companyName = form.companyName;
+      if (form.sector)      updates.sector      = form.sector;
+      if (form.size)        updates.size        = form.size;
       localStorage.setItem('user', JSON.stringify({ ...user, ...updates }));
       window.dispatchEvent(new Event('user-changed'));
       setSaved(true);
@@ -126,6 +146,74 @@ const Profile = () => {
           onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
           onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
         />
+      </div>
+
+      {/* Sub-sector TIC */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          {iconBadge('#ECFDF5', '#4C9B2F', Building2)}
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Sub-sector TIC</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Opcional</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {SECTORS.map(s => (
+            <div
+              key={s.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setForm(p => ({ ...p, sector: p.sector === s.id ? '' : s.id }))}
+              onKeyDown={e => e.key === 'Enter' && setForm(p => ({ ...p, sector: p.sector === s.id ? '' : s.id }))}
+              style={{
+                padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                border: form.sector === s.id ? '2px solid #4C9B2F' : '1.5px solid #E5E7EB',
+                background: form.sector === s.id ? '#F0FDF4' : 'white',
+                fontWeight: form.sector === s.id ? 700 : 500,
+                color: form.sector === s.id ? '#166534' : '#374151',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', color: form.sector === s.id ? '#4C9B2F' : '#6B7280' }}>{SECTOR_ICONS[s.id]}</span>
+              {s.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tamaño de empresa */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          {iconBadge('#EFF6FF', '#3182CE', Users)}
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Tamaño de Empresa</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>Opcional</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          {SIZES.map(z => (
+            <div
+              key={z.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => setForm(p => ({ ...p, size: p.size === z.id ? '' : z.id }))}
+              onKeyDown={e => e.key === 'Enter' && setForm(p => ({ ...p, size: p.size === z.id ? '' : z.id }))}
+              style={{
+                padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '0.75rem',
+                border: form.size === z.id ? '2px solid #3182CE' : '1.5px solid #E5E7EB',
+                background: form.size === z.id ? '#EFF6FF' : 'white',
+                fontWeight: form.size === z.id ? 700 : 500,
+                color: form.size === z.id ? '#1E40AF' : '#374151',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', color: form.size === z.id ? '#3182CE' : '#6B7280' }}>{SIZE_ICONS[z.id]}</span>
+              {z.label}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Banner de error general */}
