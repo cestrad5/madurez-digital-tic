@@ -239,16 +239,11 @@ const Assessment = () => {
               />
             )}
           </div>
-          <div>
-            <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
-              Correo electrónico <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional · para recibir sus resultados)</span>
-            </label>
-            {savedProfile?.email ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', border: '1.5px solid #E5E7EB', background: '#F9FAFB', fontSize: '1rem', color: '#374151' }}>
-                <Mail size={16} color="#9CA3AF" />
-                <span style={{ fontWeight: 600 }}>{companyInfo.email}</span>
-              </div>
-            ) : (
+          {!savedProfile?.email && (
+            <div>
+              <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
+                Correo electrónico <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional · para recibir sus resultados)</span>
+              </label>
               <div style={{ position: 'relative' }}>
                 <Mail size={16} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF', pointerEvents: 'none' }} />
                 <input
@@ -262,8 +257,8 @@ const Assessment = () => {
                   onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
                 />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Aviso datos precargados desde perfil */}
