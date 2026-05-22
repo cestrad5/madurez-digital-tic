@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Legend } from 'recharts';
 import { getBenchmarkForCompany } from '../lib/benchmark';
 import { getAssessment } from '../lib/db';
-import { FileDown, ArrowRight, Award, TrendingUp, TrendingDown, Target, ShieldCheck, Share2, Check, Users, Star } from 'lucide-react';
+import { FileDown, ArrowRight, ArrowLeft, Award, TrendingUp, TrendingDown, Target, ShieldCheck, Share2, Check, Users, Star } from 'lucide-react';
 import { getScoreColor, getScoreLevelLabel, readFromLocalStorage } from '../lib/utils';
 
 const Results = () => {
@@ -73,7 +73,16 @@ const Results = () => {
   ];
 
   return (
-    <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
+    <div className="container" style={{ paddingTop: '3rem', paddingBottom: '4rem' }}>
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="no-print"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', fontWeight: 600, fontSize: '0.875rem', marginBottom: '1.5rem', padding: 0 }}
+      >
+        <ArrowLeft size={15} /> Volver
+      </button>
+
       {/* Header Reporte */}
       <div style={{ 
         display: 'flex', 
