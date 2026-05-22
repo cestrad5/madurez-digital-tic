@@ -36,7 +36,7 @@ const SCALE_COLORS = [
 const Assessment = () => {
   const [step, setStep] = useState('profile');
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  const savedProfile = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
+  const [savedProfile] = useState(() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } });
   const [companyInfo, setCompanyInfo] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
