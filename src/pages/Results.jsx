@@ -108,7 +108,7 @@ const Results = () => {
             <span style={{ opacity: 0.5, fontSize: '0.82rem', marginLeft: '0.5rem' }}>· ref #{id.slice(-6)}</span>
           </p>
         </div>
-        <div className="no-print" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div className="no-print" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <button
             type="button"
             onClick={handleShare}
