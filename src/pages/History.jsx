@@ -210,22 +210,6 @@ const History = () => {
                       </span>
                     )}
                   </div>
-                  {/* Mini barras dimensionales */}
-                  <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                    {[{ k: 'D1', l: 'Est' }, { k: 'D2', l: 'Tec' }, { k: 'D3', l: 'Tal' }, { k: 'D4', l: 'Dat' }, { k: 'D5', l: 'Cli' }].map(({ k, l }) => {
-                      const val = item.results[k] ?? 0;
-                      const c = getScoreColor(val);
-                      return (
-                        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '0.62rem', fontWeight: 700, color: 'var(--color-text-muted)', width: '20px' }}>{l}</span>
-                          <div style={{ width: '44px', height: '5px', background: '#F3F4F6', borderRadius: '3px' }}>
-                            <div style={{ width: `${val}%`, height: '100%', background: c, borderRadius: '3px' }} />
-                          </div>
-                          <span style={{ fontSize: '0.62rem', fontWeight: 800, color: c }}>{val}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
