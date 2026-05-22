@@ -241,14 +241,7 @@ const Assessment = () => {
               />
             )}
           </div>
-          {savedProfile?.email ? (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-              <Mail size={15} color="#4C9B2F" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-              <p style={{ margin: 0, fontSize: '0.88rem', color: '#166534', lineHeight: 1.55 }}>
-                El informe de diagnóstico y el plan de acción serán enviados a <strong>{savedProfile.email}</strong>, la dirección registrada en su cuenta.
-              </p>
-            </div>
-          ) : (
+          {!savedProfile?.email && (
             <div>
               <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '1rem', color: '#374151' }}>
                 Correo electrónico <span style={{ color: 'var(--color-text-muted)', fontWeight: 500, fontSize: '0.88rem' }}>(opcional · para recibir sus resultados)</span>
@@ -269,17 +262,6 @@ const Assessment = () => {
             </div>
           )}
         </div>
-
-        {/* Aviso datos precargados desde perfil */}
-        {((savedProfile?.region && savedProfile?.country && savedProfile?.state) || (savedProfile?.sector && savedProfile?.size)) && (
-          <div style={{ maxWidth: '560px', margin: '0 auto 2rem auto', display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: 'var(--radius)', padding: '0.875rem 1.25rem' }}>
-            <Info size={16} color="#0369A1" style={{ flexShrink: 0 }} />
-            <p style={{ margin: 0, fontSize: '0.88rem', color: '#0C4A6E', lineHeight: 1.5 }}>
-              Los datos de su empresa ya están configurados. Si necesita modificarlos,{' '}
-              <a href="/profile" style={{ color: '#0369A1', fontWeight: 700, textDecoration: 'none' }}>edítelos en Mi Empresa →</a>
-            </p>
-          </div>
-        )}
 
         {/* --- UBICACIÓN GEOGRÁFICA --- oculta si ya está en el perfil */}
         {savedProfile?.region && savedProfile?.country && savedProfile?.state ? null : (
@@ -422,6 +404,27 @@ const Assessment = () => {
           >
             Comenzar Diagnóstico <ChevronRight />
           </button>
+        </div>
+
+        {/* Avisos informativos — debajo del botón */}
+        <div style={{ maxWidth: '560px', margin: '1.5rem auto 0', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {savedProfile?.email && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)', background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
+              <Mail size={15} color="#4C9B2F" style={{ flexShrink: 0, marginTop: '0.15rem' }} />
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#166534', lineHeight: 1.55 }}>
+                El informe de diagnóstico y el plan de acción serán enviados a <strong>{savedProfile.email}</strong>, la dirección registrada en su cuenta.
+              </p>
+            </div>
+          )}
+          {((savedProfile?.region && savedProfile?.country && savedProfile?.state) || (savedProfile?.sector && savedProfile?.size)) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F0F9FF', border: '1px solid #BAE6FD', borderRadius: 'var(--radius)', padding: '0.875rem 1.25rem' }}>
+              <Info size={15} color="#0369A1" style={{ flexShrink: 0 }} />
+              <p style={{ margin: 0, fontSize: '0.85rem', color: '#0C4A6E', lineHeight: 1.5 }}>
+                Los datos de su empresa ya están configurados. Si necesita modificarlos,{' '}
+                <a href="/profile" style={{ color: '#0369A1', fontWeight: 700, textDecoration: 'none' }}>edítelos en Mi Empresa →</a>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
