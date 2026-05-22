@@ -58,20 +58,19 @@ export default function ConfirmModal({
           animation: 'fadeInScale 0.15s ease',
         }}
       >
-        {/* Ícono */}
-        <div style={{
-          width: '52px', height: '52px', borderRadius: '14px',
-          background: v.bg, border: `1px solid ${v.border}`,
-          color: v.icon, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          marginBottom: '1.25rem',
-        }}>
-          {ICONS[variant]}
+        {/* Título con ícono */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.6rem' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+            background: v.bg, border: `1px solid ${v.border}`,
+            color: v.icon, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {ICONS[variant]}
+          </div>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>
+            {title}
+          </h3>
         </div>
-
-        {/* Título */}
-        <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>
-          {title}
-        </h3>
 
         {/* Mensaje */}
         <p style={{ margin: '0 0 1.75rem', fontSize: '0.93rem', color: '#6B7280', lineHeight: 1.6 }}>
