@@ -5,7 +5,8 @@ import { calculateScoring } from '../lib/scoring';
 import { SECTORS, SIZES } from '../lib/benchmark';
 import { saveAssessment } from '../lib/db';
 import { REGIONS, COUNTRIES, STATES } from '../lib/locationData';
-import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Building2, Users, ArrowRight, Clock, AlertTriangle, Code2, Shield, Server, GraduationCap, CreditCard, Radio, User, Building, Mail, MapPin, Globe2, Waves, Map } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 const SECTOR_ICONS = {
   software:        <Code2 size={18} />,
@@ -38,7 +39,7 @@ const Assessment = () => {
   const [companyInfo, setCompanyInfo] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || 'null');
-      return { sector: '', size: '', companyName: user?.companyName || '', email: user?.email || '', region: '', country: '', state: '' };
+      return { sector: '', size: '', companyName: user?.companyName || '', email: user?.email || '', region: user?.region || '', country: user?.country || '', state: user?.state || '' };
     } catch { return { sector: '', size: '', companyName: '', email: '', region: '', country: '', state: '' }; }
   });
   const [answers, setAnswers] = useState({});
@@ -135,9 +136,14 @@ const Assessment = () => {
     const assessmentId = Date.now().toString();
     const currentUser = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
     const userId = currentUser?.uid || (currentUser?.isDemo ? 'demo' : null);
-    if (currentUser && companyInfo.companyName) {
+    if (currentUser) {
       try {
-        localStorage.setItem('user', JSON.stringify({ ...currentUser, companyName: companyInfo.companyName }));
+        const updates = {};
+        if (companyInfo.companyName) updates.companyName = companyInfo.companyName;
+        if (companyInfo.region)      updates.region      = companyInfo.region;
+        if (companyInfo.country)     updates.country     = companyInfo.country;
+        if (companyInfo.state)       updates.state       = companyInfo.state;
+        localStorage.setItem('user', JSON.stringify({ ...currentUser, ...updates }));
         window.dispatchEvent(new Event('user-changed'));
       } catch { /* cuota */ }
     }
@@ -243,7 +249,7 @@ const Assessment = () => {
         {/* --- UBICACIÓN GEOGRÁFICA --- */}
         <div style={{ maxWidth: '560px', margin: '0 auto 2.5rem auto', background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-            <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.6rem', borderRadius: '12px' }}><MapPin /></div>
+            <div style={{ background: '#FEF3C7', color: '#D97706', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MapPin size={20} /></div>
             <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Ubicación Geográfica</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -251,17 +257,21 @@ const Assessment = () => {
             <div>
               <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.75rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Región *</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                {REGIONS.map(r => {
-                  const selected = companyInfo.region === r.id;
+                {[
+                  { id: 'norte_centro_america', label: 'Norteamérica y Centroamérica', Icon: Globe2 },
+                  { id: 'caribe',               label: 'Caribe',                       Icon: Waves  },
+                  { id: 'sudamerica',            label: 'Sudamérica',                   Icon: Map    },
+                ].map(({ id, label, Icon }) => {
+                  const selected = companyInfo.region === id;
                   return (
                     <div
-                      key={r.id}
+                      key={id}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, region: r.id, country: '', state: '' }))}
-                      onClick={() => setCompanyInfo(prev => ({ ...prev, region: r.id, country: '', state: '' }))}
+                      onKeyDown={e => e.key === 'Enter' && setCompanyInfo(prev => ({ ...prev, region: id, country: '', state: '' }))}
+                      onClick={() => setCompanyInfo(prev => ({ ...prev, region: id, country: '', state: '' }))}
                       style={{
-                        padding: '1rem 0.75rem',
+                        padding: '1.1rem 0.75rem',
                         borderRadius: 'var(--radius)',
                         border: selected ? '2px solid #4C9B2F' : '1.5px solid #E5E7EB',
                         background: selected ? '#F0FDF4' : 'white',
@@ -271,8 +281,10 @@ const Assessment = () => {
                         boxShadow: selected ? '0 0 0 3px rgba(76,155,47,0.12)' : 'none',
                       }}
                     >
-                      <div style={{ fontSize: '1.5rem', marginBottom: '0.35rem', lineHeight: 1 }}>{r.icon}</div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: selected ? 800 : 600, color: selected ? '#4C9B2F' : '#374151', lineHeight: 1.3 }}>{r.label}</div>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                        <Icon size={22} color={selected ? '#4C9B2F' : '#6B7280'} strokeWidth={1.75} />
+                      </div>
+                      <div style={{ fontSize: '0.72rem', fontWeight: selected ? 800 : 600, color: selected ? '#4C9B2F' : '#374151', lineHeight: 1.3 }}>{label}</div>
                     </div>
                   );
                 })}
@@ -282,55 +294,27 @@ const Assessment = () => {
             {/* País */}
             <div>
               <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>País *</label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={companyInfo.country}
-                  onChange={e => setCompanyInfo(prev => ({ ...prev, country: e.target.value, state: '' }))}
-                  disabled={!companyInfo.region}
-                  onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
-                  onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
-                  style={{
-                    width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)',
-                    border: '1.5px solid #E5E7EB', fontSize: '1rem', outline: 'none',
-                    background: companyInfo.region ? 'white' : '#F9FAFB',
-                    color: companyInfo.region ? '#111827' : '#9CA3AF',
-                    cursor: companyInfo.region ? 'pointer' : 'not-allowed',
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                    appearance: 'none', boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="">{companyInfo.region ? 'Seleccione un país' : '— Seleccione primero la región —'}</option>
-                  {companyInfo.region && COUNTRIES[companyInfo.region].map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
-                <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: '0.75rem' }}>▼</div>
-              </div>
+              <CustomSelect
+                value={companyInfo.country}
+                onChange={val => setCompanyInfo(prev => ({ ...prev, country: val, state: '' }))}
+                disabled={!companyInfo.region}
+                placeholder="Seleccione un país"
+                disabledPlaceholder="— Seleccione primero la región —"
+                options={(companyInfo.region ? COUNTRIES[companyInfo.region] : []).map(c => ({ value: c.id, label: c.label }))}
+              />
             </div>
 
             {/* Departamento / Estado */}
             <div>
               <label style={{ display: 'block', fontWeight: 700, marginBottom: '0.5rem', fontSize: '0.9rem', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Departamento / Estado / Provincia *</label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={companyInfo.state}
-                  onChange={e => setCompanyInfo(prev => ({ ...prev, state: e.target.value }))}
-                  disabled={!companyInfo.country}
-                  onFocus={e => { e.target.style.borderColor = '#4C9B2F'; e.target.style.boxShadow = '0 0 0 3px rgba(76,155,47,0.12)'; }}
-                  onBlur={e => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none'; }}
-                  style={{
-                    width: '100%', padding: '0.875rem 1.25rem', borderRadius: 'var(--radius)',
-                    border: '1.5px solid #E5E7EB', fontSize: '1rem', outline: 'none',
-                    background: companyInfo.country ? 'white' : '#F9FAFB',
-                    color: companyInfo.country ? '#111827' : '#9CA3AF',
-                    cursor: companyInfo.country ? 'pointer' : 'not-allowed',
-                    transition: 'border-color 0.2s, box-shadow 0.2s',
-                    appearance: 'none', boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="">{companyInfo.country ? 'Seleccione su departamento / estado' : '— Seleccione primero el país —'}</option>
-                  {companyInfo.country && STATES[companyInfo.country]?.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-                <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#9CA3AF', fontSize: '0.75rem' }}>▼</div>
-              </div>
+              <CustomSelect
+                value={companyInfo.state}
+                onChange={val => setCompanyInfo(prev => ({ ...prev, state: val }))}
+                disabled={!companyInfo.country}
+                placeholder="Seleccione su departamento / estado"
+                disabledPlaceholder="— Seleccione primero el país —"
+                options={(companyInfo.country ? STATES[companyInfo.country] ?? [] : []).map(s => ({ value: s, label: s }))}
+              />
             </div>
           </div>
         </div>
@@ -339,7 +323,7 @@ const Assessment = () => {
           {/* Sub-Sector */}
           <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-              <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.6rem', borderRadius: '12px' }}><Building2 /></div>
+              <div style={{ background: '#ECFDF5', color: '#4C9B2F', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Building2 size={20} /></div>
               <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Sub-sector TIC</h3>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -369,7 +353,7 @@ const Assessment = () => {
           {/* Tamaño */}
           <div style={{ background: 'white', padding: '2.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid #E5E7EB', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem' }}>
-              <div style={{ background: '#EFF6FF', color: '#3182CE', padding: '0.6rem', borderRadius: '12px' }}><Users /></div>
+              <div style={{ background: '#EFF6FF', color: '#3182CE', padding: '0.6rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={20} /></div>
               <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Tamaño de Empresa</h3>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

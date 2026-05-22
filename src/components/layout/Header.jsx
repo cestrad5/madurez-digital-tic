@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Rocket, LogOut, User, ChevronDown } from 'lucide-react';
+import { Menu, X, Rocket, LogOut, User, ChevronDown, Building2 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../lib/firebase';
 
@@ -162,6 +162,21 @@ const Header = () => {
                   </div>
                   <button
                     type="button"
+                    onClick={() => { setShowUserMenu(false); navigate('/profile'); }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem',
+                      padding: '0.75rem 1rem',
+                      background: 'none', border: 'none', borderBottom: '1px solid var(--color-border)', cursor: 'pointer',
+                      color: 'var(--color-text)', fontSize: '0.875rem', fontWeight: 600,
+                      textAlign: 'left', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                  >
+                    <Building2 size={15} /> Mi Empresa
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleLogout}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem',
@@ -236,13 +251,21 @@ const Header = () => {
             );
           })}
           {user ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-border)', borderRadius: 'var(--radius)', padding: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
-            >
-              <LogOut size={18} /> Cerrar Sesión
-            </button>
+            <>
+              <Link
+                to="/profile"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.05rem', fontWeight: 600, color: 'var(--color-text)', borderLeft: '3px solid transparent', paddingLeft: '0.75rem' }}
+              >
+                <Building2 size={18} /> Mi Empresa
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', background: 'var(--color-danger-light)', color: 'var(--color-danger)', border: '1px solid var(--color-danger-border)', borderRadius: 'var(--radius)', padding: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+              >
+                <LogOut size={18} /> Cerrar Sesión
+              </button>
+            </>
           ) : (
             <Link to="/login" style={{ background: 'var(--color-primary)', color: 'white', padding: '0.75rem', borderRadius: 'var(--radius)', textAlign: 'center', fontWeight: 700 }}>
               Iniciar Sesión

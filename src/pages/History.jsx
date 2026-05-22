@@ -15,12 +15,14 @@ const merge = (local, remote) => {
 const History = () => {
   const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const navigate = useNavigate();
 
   const load = async () => {
     setLoading(true);
     const user = (() => { try { return JSON.parse(localStorage.getItem('user') || 'null'); } catch { return null; } })();
     const userId = user?.uid || (user?.isDemo ? 'demo' : null);
+    setCurrentUserId(userId);
     const local = readFromLocalStorage(userId);
     setAssessments(local.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
 
@@ -235,15 +237,17 @@ const History = () => {
                   >
                     Hoja de Ruta
                   </button>
-                  <button
-                    type="button"
-                    className="btn-hover"
-                    onClick={() => handleDelete(item.id)}
-                    title="Eliminar diagnóstico"
-                    style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-danger-border)', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                  >
-                    <Trash2 size={17} />
-                  </button>
+                  {(!item.userId || item.userId === currentUserId) && (
+                    <button
+                      type="button"
+                      className="btn-hover"
+                      onClick={() => handleDelete(item.id)}
+                      title="Eliminar diagnóstico"
+                      style={{ background: 'var(--color-danger-light)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius)', border: '1px solid var(--color-danger-border)', display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
