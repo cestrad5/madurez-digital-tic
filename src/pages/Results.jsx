@@ -114,7 +114,8 @@ const Results = () => {
             onClick={handleShare}
             style={{
               padding: '0.8rem 1.5rem', borderRadius: 'var(--radius)',
-              display: 'flex', alignItems: 'center', gap: '0.6rem', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', fontWeight: 700,
+              minWidth: '160px',
               background: copied ? '#F0FDF4' : 'white',
               color: copied ? '#166534' : '#4B5563',
               cursor: 'pointer',
